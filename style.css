@@ -1,0 +1,36 @@
+a:link {
+    color: white;
+    background-color: transparent;
+    text-decoration: none;
+  }
+  a:visited {
+    color: white;
+    background-color: transparent;
+    text-decoration: none;
+  }
+  a:hover {
+    color: orange;
+    background-color: transparent;
+    text-decoration: underline;
+  }
+  a:active {
+    color: orange;
+    background-color: transparent;
+    text-decoration: underline;
+  }
+h1{
+  font-family:monospace;
+  font-size: 30px;
+}
+h2{
+  font-family:monospace;
+  font-size: 20px;
+}
+p{
+  font-family:monospace;
+  font-size: 15px;
+}
+a{
+  font-family:monospace;
+  font-size: 20px;
+}
