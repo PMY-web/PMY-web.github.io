@@ -1,41 +1,1366 @@
+body {
+  background: linear-gradient(45deg, #0a0a0a 25%, #111111 25%, #111111 50%, #0a0a0a 50%, #0a0a0a 75%, #111111 75%, #111111);
+  background-size: 20px 20px;
+  animation: pixelMove 8s linear infinite;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  color: white;
+}
+
+/* Pixelated background animation */
+@keyframes pixelMove {
+  0% { background-position: 0px 0px; }
+  100% { background-position: 20px 20px; }
+}
+
+/* scanline effect */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 255, 150, 0.03) 2px,
+    rgba(0, 255, 150, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Pixelated link styling */
 a:link {
-    color: white;
-    background-color: transparent;
-    text-decoration: none;
-  }
-  a:visited {
-    color: white;
-    background-color: transparent;
-    text-decoration: none;
-  }
-  a:hover {
-    color: orange;
-    background-color: transparent;
-    text-decoration: underline;
-  }
-  a:active {
-    color: orange;
-    background-color: transparent;
-    text-decoration: underline;
-  }
-h1{
-  font-family:monospace;
+  color: #00ff96;
+  background-color: transparent;
+  text-decoration: none;
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  position: relative;
+  z-index: 2;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  padding: 8px 16px;
+  display: inline-block;
+}
+
+a:visited {
+  color: #00ff96;
+  background-color: transparent;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #000000;
+  background: linear-gradient(45deg, #00ff96, #00cc77);
+  text-decoration: none;
+  border: 2px solid #00ff96;
+  box-shadow:
+    0 0 10px #00ff96,
+    inset 0 0 10px rgba(0, 255, 150, 0.2);
+  transform: scale(1.05);
+}
+
+a:active {
+  color: #000000;
+  background: #00ff96;
+  text-decoration: none;
+  transform: scale(0.98);
+}
+
+/* Enhanced typography */
+h1 {
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
   font-size: 30px;
+  color: #00ff96;
+  text-shadow: 0 0 10px #00ff96;
+  letter-spacing: 3px;
+  font-weight: bold;
+  text-transform: uppercase;
 }
-h2{
-  font-family:monospace;
+
+h2 {
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
   font-size: 20px;
+  color: #ffffff;
+  text-shadow: 0 0 5px #ffffff;
+  letter-spacing: 2px;
 }
-p{
-  font-family:monospace;
+
+p {
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
   font-size: 15px;
+  color: #cccccc;
+  letter-spacing: 1px;
 }
-a{
-  font-family:monospace;
-  font-size: 20px;
+
+a {
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 18px;
 }
-.center{
-  display:block;
+
+/* Enhanced center class */
+.center {
+  display: block;
   margin-left: auto;
   margin-right: auto;
+  position: relative;
+  z-index: 2;
+}
+
+/* Pixelated image styling */
+img {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  filter:
+    drop-shadow(0 0 20px rgba(0, 255, 150, 0.3))
+    contrast(1.2)
+    brightness(1.1);
+  transition: all 0.3s ease;
+}
+
+img:hover {
+  filter:
+    drop-shadow(0 0 30px rgba(0, 255, 150, 0.60))
+    contrast(1.3)
+    brightness(1.2);
+  transform: scale(1.05);
+}
+
+/* Logo click effect */
+img#logo {
+  cursor: pointer;
+}
+
+.click-circle {
+  position: fixed;
+  border: 2px solid #00ff96;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 1;
+}
+
+.click-circle.expanding {
+  animation: expandCircle 1.5s ease-out forwards;
+}
+
+@keyframes expandCircle {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 1;
+  }
+  100% {
+    width: 200vmax;
+    height: 200vmax;
+    opacity: 0;
+  }
+}
+
+
+/* DERS.HTML SPECIFIC STYLES - No conflicts with other pages */
+
+/* Breathing and flickering animations for ders cards */
+@keyframes glowBreath {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(0, 255, 150, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(0, 255, 150, 0.4);
+  }
+}
+
+@keyframes glowFlicker {
+  0%, 88% {
+    opacity: 1;
+  }
+  89% {
+    opacity: 0.6;
+  }
+  90% {
+    opacity: 1;
+  }
+  91% {
+    opacity: 0.7;
+  }
+  92% {
+    opacity: 1;
+  }
+  96% {
+    opacity: 0.8;
+  }
+  97% {
+    opacity: 1;
+  }
+  98% {
+    opacity: 0.5;
+  }
+  99% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Ders container and layout styling */
+.ders-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+/* Ders cards container */
+.ders-cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+  margin-top: 40px;
+}
+
+/* Individual ders card styling */
+.ders-card {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(17, 17, 17, 0.9));
+  border: 2px solid rgba(0, 255, 150, 0.3);
+  border-radius: 8px;
+  padding: 30px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(5px);
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Ders card background pattern */
+.ders-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 25%, rgba(0, 255, 150, 0.02) 25%, rgba(0, 255, 150, 0.02) 50%, transparent 50%, transparent 75%, rgba(0, 255, 150, 0.02) 75%, rgba(0, 255, 150, 0.02));
+  background-size: 10px 10px;
+  pointer-events: none;
+}
+
+/* Ders card content styling */
+.ders-card h2 {
+  color: #00ff96;
+  margin-bottom: 15px;
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  z-index: 1;
+}
+
+.ders-card p {
+  color: #cccccc;
+  margin-bottom: 20px;
+  font-size: 14px;
+  line-height: 1.5;
+  position: relative;
+  z-index: 1;
+}
+
+/* Ders card link styling - ONLY text color change on hover */
+.ders-card-link {
+  display: block;
+  text-decoration: none !important;
+  color: inherit !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;
+  font-family: inherit !important;
+  font-size: inherit !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Override the general a:hover rule specifically for ders cards */
+.ders-card-link:hover {
+  color: inherit !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  text-decoration: none !important;
+}
+
+.ders-card-link:hover .ders-card {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(0, 255, 150, 0.4);
+  animation: glowBreath 2s ease-in-out infinite, glowFlicker 0.1s ease-in-out infinite;
+}
+
+.ders-card-link:hover .ders-card h2,
+.ders-card-link:hover .ders-card p {
+  color: #ffffff;
+}
+
+/* General body styling for course pages  */
+body.course-page {
+  background-color: black;
+  color: white;
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  margin: 0;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+/* SADB2.HTML SPECIFIC STYLES */
+
+/* SADB2 body styling  */
+.sadb2-body {
+  background: linear-gradient(45deg, #0a0a0a 25%, #111111 25%, #111111 50%, #0a0a0a 50%, #0a0a0a 75%, #111111 75%, #111111);
+  background-size: 20px 20px;
+  animation: pixelMove 8s linear infinite;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  color: white;
+}
+
+/* SADB2 scanline effect - same as index */
+.sadb2-body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 255, 150, 0.03) 2px,
+    rgba(0, 255, 150, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* SADB2 container */
+.sadb2-container {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  max-width: 800px;
+  width: 100%;
+}
+
+/* SADB2 title styling */
+.sadb2-title {
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 30px;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ff96;
+  letter-spacing: 3px;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 40px;
+  position: relative;
+  display: inline-block;
+}
+
+/* Moving signal line effect under title */
+.sadb2-title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background: #ffffff;
+  box-shadow: 0 0 6px #00ff96, 0 0 12px rgba(0, 255, 150, 0.5);
+  animation: signalBounce 3s linear infinite;
+  transform-origin: center;
+}
+
+/* Signal bounce animation - acceleration to center, deceleration to corners */
+@keyframes signalBounce {
+  /* Start at left corner with minimum speed */
+  0% {
+    left: 0;
+    transform: scaleX(0.5);
+    animation-timing-function: ease-in;
+  }
+  /* Slow movement from left corner */
+  10% {
+    left: calc(5% - 2px);
+    transform: scaleX(0.6);
+    animation-timing-function: ease-in;
+  }
+  /* Accelerating towards center */
+  20% {
+    left: calc(20% - 8px);
+    transform: scaleX(0.8);
+    animation-timing-function: ease-in;
+  }
+  /* Maximum speed at center */
+  25% {
+    left: calc(50% - 20px);
+    transform: scaleX(1);
+    animation-timing-function: ease-out;
+  }
+  /* Decelerating from center to right */
+  30% {
+    left: calc(80% - 32px);
+    transform: scaleX(0.8);
+    animation-timing-function: ease-out;
+  }
+  /* Slowing down approaching right corner */
+  40% {
+    left: calc(95% - 38px);
+    transform: scaleX(0.6);
+    animation-timing-function: ease-out;
+  }
+  /* Minimum speed at right corner */
+  50% {
+    left: calc(100% - 40px);
+    transform: scaleX(0.5);
+    animation-timing-function: ease-in;
+  }
+  /* Slow movement from right corner */
+  60% {
+    left: calc(95% - 38px);
+    transform: scaleX(0.6);
+    animation-timing-function: ease-in;
+  }
+  /* Accelerating towards center */
+  70% {
+    left: calc(80% - 32px);
+    transform: scaleX(0.8);
+    animation-timing-function: ease-in;
+  }
+  /* Maximum speed at center */
+  75% {
+    left: calc(50% - 20px);
+    transform: scaleX(1);
+    animation-timing-function: ease-out;
+  }
+  /* Decelerating from center to left */
+  80% {
+    left: calc(20% - 8px);
+    transform: scaleX(0.8);
+    animation-timing-function: ease-out;
+  }
+  /* Slowing down approaching left corner */
+  90% {
+    left: calc(5% - 2px);
+    transform: scaleX(0.6);
+    animation-timing-function: ease-out;
+  }
+  /* Return to minimum speed at left corner */
+  100% {
+    left: 0;
+    transform: scaleX(0.5);
+    animation-timing-function: ease-in;
+  }
+}
+
+/* SADB2 links container */
+.sadb2-links {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+}
+
+/* SADB2 PDF link styling - matches index button style */
+.sadb2-pdf-link {
+  color: #00ff96 !important;
+  background-color: transparent !important;
+  text-decoration: none !important;
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  position: relative;
+  z-index: 2;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  padding: 12px 24px;
+  display: inline-block;
+  font-size: 16px;
+  min-width: 300px;
+}
+
+.sadb2-pdf-link:visited {
+  color: #00ff96 !important;
+  background-color: transparent !important;
+  text-decoration: none !important;
+}
+
+.sadb2-pdf-link:hover {
+  color: #000000 !important;
+  background: linear-gradient(45deg, #00ff96, #00cc77) !important;
+  text-decoration: none !important;
+  border: 2px solid #00ff96 !important;
+  box-shadow:
+    0 0 10px #00ff96,
+    inset 0 0 10px rgba(0, 255, 150, 0.2) !important;
+  transform: scale(1.05) !important;
+}
+
+.sadb2-pdf-link:active {
+  color: #000000 !important;
+  background: #00ff96 !important;
+  text-decoration: none !important;
+  transform: scale(0.98) !important;
+}
+
+/* Responsive adjustments for SADB2 */
+@media (max-width: 768px) {
+  .sadb2-title {
+    font-size: 24px;
+    letter-spacing: 2px;
+  }
+
+  .sadb2-pdf-link {
+    min-width: 250px;
+    font-size: 14px;
+    padding: 10px 20px;
+  }
+
+  .sadb2-container {
+    padding: 0 20px;
+  }
+}
+
+/* MESLEKIMAT.HTML SPECIFIC STYLES  */
+
+/* MeslekiMat body styling  */
+.meslek-body {
+  background: linear-gradient(45deg, #0a0a0a 25%, #111111 25%, #111111 50%, #0a0a0a 50%, #0a0a0a 75%, #111111 75%, #111111);
+  background-size: 20px 20px;
+  animation: pixelMove 8s linear infinite;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  color: white;
+}
+
+/* MeslekiMat scanline effect - same as SADB2 */
+.meslek-body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 255, 150, 0.03) 2px,
+    rgba(0, 255, 150, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* MeslekiMat container */
+.meslek-container {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  max-width: 800px;
+  width: 100%;
+}
+
+/* MeslekiMat title styling with signal line effect */
+.meslek-title {
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 30px;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ff96;
+  letter-spacing: 3px;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 40px;
+  position: relative;
+  display: inline-block;
+}
+
+/* Moving signal line effect under MeslekiMat title */
+.meslek-title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background: #ffffff;
+  box-shadow: 0 0 6px #00ff96, 0 0 12px rgba(0, 255, 150, 0.5);
+  animation: signalBounce 3s linear infinite;
+  transform-origin: center;
+}
+
+/* MeslekiMat content grid layout */
+.meslek-content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-top: 40px;
+}
+
+/* MeslekiMat content area styling */
+.meslek-content-area {
+  border: 1px solid #00ff96;
+  border-radius: 8px;
+  padding: 25px;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(3px);
+  position: relative;
+}
+
+/* MeslekiMat section styling */
+.meslek-section {
+  margin-bottom: 40px;
+}
+
+/* MeslekiMat subtitle styling */
+.meslek-subtitle {
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 20px;
+  color: #00ff96;
+  text-shadow: 0 0 5px #00ff96;
+  letter-spacing: 2px;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+/* MeslekiMat links container */
+.meslek-links {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
+}
+
+/* MeslekiMat PDF link styling - matches SADB2 style */
+.meslek-pdf-link {
+  color: #00ff96 !important;
+  background-color: transparent !important;
+  text-decoration: none !important;
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  padding: 10px 20px;
+  display: inline-block;
+  font-size: 14px;
+  min-width: 250px;
+}
+
+.meslek-pdf-link:visited {
+  color: #00ff96 !important;
+  background-color: transparent !important;
+  text-decoration: none !important;
+}
+
+.meslek-pdf-link:hover {
+  color: #000000 !important;
+  background: linear-gradient(45deg, #00ff96, #00cc77) !important;
+  text-decoration: none !important;
+  border: 2px solid #00ff96 !important;
+  box-shadow:
+    0 0 10px #00ff96,
+    inset 0 0 10px rgba(0, 255, 150, 0.2) !important;
+  transform: scale(1.05) !important;
+}
+
+.meslek-pdf-link:active {
+  color: #000000 !important;
+  background: #00ff96 !important;
+  text-decoration: none !important;
+  transform: scale(0.98) !important;
+}
+
+
+/* MeslekiMat subtitle flickering effect */
+.meslek-subtitle-flicker {
+  animation: subtitleFlicker 2s ease-in-out infinite;
+}
+
+@keyframes subtitleFlicker {
+  0%, 85% {
+    opacity: 1;
+    text-shadow: 0 0 5px #00ff96;
+  }
+  86% {
+    opacity: 0.3;
+    text-shadow: 0 0 2px #00ff96;
+  }
+  87% {
+    opacity: 1;
+    text-shadow: 0 0 8px #00ff96;
+  }
+  88% {
+    opacity: 0.6;
+    text-shadow: 0 0 3px #00ff96;
+  }
+  89% {
+    opacity: 1;
+    text-shadow: 0 0 12px #00ff96, 0 0 20px rgba(0, 255, 150, 0.3);
+  }
+  92% {
+    opacity: 0.4;
+    text-shadow: 0 0 2px #00ff96;
+  }
+  93% {
+    opacity: 1;
+    text-shadow: 0 0 6px #00ff96;
+  }
+  100% {
+    opacity: 1;
+    text-shadow: 0 0 5px #00ff96;
+  }
+}
+
+/* MeslekiMat external link styling - different style for YouTube links */
+.meslek-external-link {
+  color: #ffffff !important;
+  background-color: transparent !important;
+  text-decoration: none !important;
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-weight: normal;
+  letter-spacing: 1px;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 16px;
+  display: inline-block;
+  font-size: 14px;
+  min-width: 250px;
+}
+
+.meslek-external-link:visited {
+  color: #ffffff !important;
+  background-color: transparent !important;
+  text-decoration: none !important;
+}
+
+.meslek-external-link:hover {
+  color: #00ff96 !important;
+  background: rgba(0, 255, 150, 0.1) !important;
+  text-decoration: none !important;
+  border: 1px solid #00ff96 !important;
+  box-shadow: 0 0 8px rgba(0, 255, 150, 0.3) !important;
+  transform: scale(1.02) !important;
+}
+
+.meslek-external-link:active {
+  transform: scale(0.98) !important;
+}
+
+/* Responsive adjustments for MeslekiMat */
+@media (max-width: 768px) {
+  .meslek-title {
+    font-size: 24px;
+    letter-spacing: 2px;
+  }
+
+  .meslek-subtitle {
+    font-size: 18px;
+    letter-spacing: 1px;
+  }
+
+  .meslek-external-link {
+    min-width: 200px;
+    font-size: 12px;
+    padding: 8px 15px;
+  }
+
+  .meslek-container {
+    padding: 0 15px;
+  }
+
+  .meslek-content-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-top: 30px;
+  }
+
+  .meslek-content-area {
+    padding: 20px;
+  }
+}
+
+/* DERS.HTML TITLE GLITCH EFFECT - Random trigger between 4-12 seconds */
+.ders-container h1.glitch {
+  position: relative;
+  animation: glitch 0.15s ease-in-out;
+}
+
+@keyframes glitch {
+  0%, 100% {
+    transform: translate(0);
+  }
+  10% {
+    transform: translate(-2px, 2px);
+    filter: hue-rotate(90deg);
+  }
+  20% {
+    transform: translate(-3px, 0px);
+    filter: hue-rotate(180deg);
+  }
+  30% {
+    transform: translate(3px, 2px);
+    filter: hue-rotate(270deg);
+  }
+  40% {
+    transform: translate(-1px, -1px);
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    transform: translate(2px, -2px);
+    filter: hue-rotate(90deg);
+  }
+  60% {
+    transform: translate(-3px, 1px);
+    filter: hue-rotate(180deg);
+  }
+  70% {
+    transform: translate(1px, 1px);
+    filter: hue-rotate(270deg);
+  }
+  80% {
+    transform: translate(-2px, -1px);
+    filter: hue-rotate(0deg);
+  }
+  90% {
+    transform: translate(2px, 2px);
+    filter: hue-rotate(90deg);
+  }
+}
+
+.ders-container h1.glitch::before {
+  content: 'Dersler';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  color: #ff0000;
+  mix-blend-mode: multiply;
+  clip-path: inset(0 0 50% 0);
+  animation: glitch-red 0.15s ease-in-out;
+}
+
+.ders-container h1.glitch::after {
+  content: 'Dersler';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  color: #00ffff;
+  mix-blend-mode: multiply;
+  clip-path: inset(50% 0 0 0);
+  animation: glitch-cyan 0.15s ease-in-out;
+}
+
+@keyframes glitch-red {
+  0%, 100% {
+    transform: translate(0);
+  }
+  10% {
+    transform: translate(-1px, 1px);
+  }
+  20% {
+    transform: translate(-2px, 0px);
+  }
+  30% {
+    transform: translate(2px, 1px);
+  }
+  40% {
+    transform: translate(-1px, -1px);
+  }
+  50% {
+    transform: translate(1px, -1px);
+  }
+  60% {
+    transform: translate(-2px, 1px);
+  }
+  70% {
+    transform: translate(1px, 1px);
+  }
+  80% {
+    transform: translate(-1px, -1px);
+  }
+  90% {
+    transform: translate(1px, 1px);
+  }
+}
+
+@keyframes glitch-cyan {
+  0%, 100% {
+    transform: translate(0);
+  }
+  10% {
+    transform: translate(1px, -1px);
+  }
+  20% {
+    transform: translate(2px, 0px);
+  }
+  30% {
+    transform: translate(-1px, -1px);
+  }
+  40% {
+    transform: translate(1px, 1px);
+  }
+  50% {
+    transform: translate(-1px, 1px);
+  }
+  60% {
+    transform: translate(2px, -1px);
+  }
+  70% {
+    transform: translate(-1px, -1px);
+  }
+  80% {
+    transform: translate(1px, 1px);
+  }
+  90% {
+    transform: translate(-1px, -1px);
+  }
+}
+
+/* Responsive adjustments for ders.html */
+@media (max-width: 768px) {
+  .ders-cards-container {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .ders-container {
+    padding: 20px 15px;
+  }
+
+  .ders-card {
+    padding: 20px;
+  }
+}
+
+/* UEMTURLERI.HTML SPECIFIC STYLES */
+
+/* UEM body styling  */
+.uem-body {
+  background: linear-gradient(45deg, #0a0a0a 25%, #111111 25%, #111111 50%, #0a0a0a 50%, #0a0a0a 75%, #111111 75%, #111111);
+  background-size: 20px 20px;
+  animation: pixelMove 8s linear infinite;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  color: white;
+}
+
+/* UEM scanline effect - same as SADB2 */
+.uem-body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 255, 150, 0.03) 2px,
+    rgba(0, 255, 150, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* UEM container */
+.uem-container {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  max-width: 800px;
+  width: 100%;
+}
+
+/* UEM title styling */
+.uem-title {
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 30px;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ff96;
+  letter-spacing: 3px;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 40px;
+  position: relative;
+  display: inline-block;
+}
+
+/* Moving signal line effect under UEM title */
+.uem-title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background: #ffffff;
+  box-shadow: 0 0 6px #00ff96, 0 0 12px rgba(0, 255, 150, 0.5);
+  animation: signalBounce 3s linear infinite;
+  transform-origin: center;
+}
+
+/* UEM links container */
+.uem-links {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+}
+
+/* UEM genre link styling - matches SADB2 style */
+.uem-genre-link {
+  color: #00ff96 !important;
+  background-color: transparent !important;
+  text-decoration: none !important;
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  position: relative;
+  z-index: 2;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  padding: 12px 24px;
+  display: inline-block;
+  font-size: 16px;
+  min-width: 300px;
+}
+
+.uem-genre-link:visited {
+  color: #00ff96 !important;
+  background-color: transparent !important;
+  text-decoration: none !important;
+}
+
+.uem-genre-link:hover {
+  color: #000000 !important;
+  background: linear-gradient(45deg, #00ff96, #00cc77) !important;
+  text-decoration: none !important;
+  border: 2px solid #00ff96 !important;
+  box-shadow:
+    0 0 10px #00ff96,
+    inset 0 0 10px rgba(0, 255, 150, 0.2) !important;
+  transform: scale(1.05) !important;
+}
+
+.uem-genre-link:active {
+  color: #000000 !important;
+  background: #00ff96 !important;
+  text-decoration: none !important;
+  transform: scale(0.98) !important;
+}
+
+/* Responsive adjustments for UEM */
+@media (max-width: 768px) {
+  .uem-title {
+    font-size: 24px;
+    letter-spacing: 2px;
+  }
+
+  .uem-genre-link {
+    min-width: 250px;
+    font-size: 14px;
+    padding: 10px 20px;
+  }
+
+  .uem-container {
+    padding: 0 20px;
+  }
+}
+
+/* GENRE PAGES SPECIFIC STYLES  */
+
+/* Genre page body styling */
+.genre-body {
+  background: linear-gradient(45deg, #0a0a0a 25%, #111111 25%, #111111 50%, #0a0a0a 50%, #0a0a0a 75%, #111111 75%, #111111);
+  background-size: 20px 20px;
+  animation: pixelMove 8s linear infinite;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  color: white;
+}
+
+/* Genre page scanline effect - same as index */
+.genre-body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 255, 150, 0.03) 2px,
+    rgba(0, 255, 150, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Genre page container */
+.genre-container {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 40px;
+}
+
+/* Genre page title styling with breath effect */
+.genre-title {
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 30px;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00ff96;
+  letter-spacing: 3px;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 40px;
+  position: relative;
+  display: inline-block;
+  animation: titleBreath 3s ease-in-out infinite;
+}
+
+/* Breathing effect for genre title */
+@keyframes titleBreath {
+  0%, 100% {
+    text-shadow: 0 0 10px #00ff96, 0 0 20px rgba(0, 255, 150, 0.3);
+    transform: scale(1);
+  }
+  50% {
+    text-shadow: 0 0 20px #00ff96, 0 0 30px rgba(0, 255, 150, 0.6), 0 0 40px rgba(0, 255, 150, 0.2);
+    transform: scale(1.02);
+  }
+}
+
+/* Genre content area */
+.genre-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  width: 100%;
+}
+
+/* Genre buttons container for side-by-side layout */
+.genre-buttons-container {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+/* Genre back button styling */
+.genre-back-button {
+  color: #ffffff !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  text-decoration: none !important;
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-weight: normal;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 16px;
+  display: inline-block;
+  font-size: 14px;
+  min-width: 120px;
+}
+
+.genre-back-button:visited {
+  color: #ffffff !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  text-decoration: none !important;
+}
+
+.genre-back-button:hover {
+  color: #00ff96 !important;
+  background: rgba(0, 255, 150, 0.1) !important;
+  text-decoration: none !important;
+  border: 1px solid #00ff96 !important;
+  box-shadow: 0 0 8px rgba(0, 255, 150, 0.3) !important;
+  transform: scale(1.02) !important;
+}
+
+.genre-back-button:active {
+  transform: scale(0.98) !important;
+}
+
+/* Genre Spotify link styling - matches SADB2 style */
+.genre-spotify-link {
+  color: #00ff96 !important;
+  background-color: transparent !important;
+  text-decoration: none !important;
+  font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  position: relative;
+  z-index: 2;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  padding: 12px 24px;
+  display: inline-block;
+  font-size: 14px;
+  min-width: 150px;
+}
+
+.genre-spotify-link:visited {
+  color: #00ff96 !important;
+  background-color: transparent !important;
+  text-decoration: none !important;
+}
+
+.genre-spotify-link:hover {
+  color: #000000 !important;
+  background: linear-gradient(45deg, #00ff96, #00cc77) !important;
+  text-decoration: none !important;
+  border: 2px solid #00ff96 !important;
+  box-shadow:
+    0 0 10px #00ff96,
+    inset 0 0 10px rgba(0, 255, 150, 0.2) !important;
+  transform: scale(1.05) !important;
+}
+
+.genre-spotify-link:active {
+  color: #000000 !important;
+  background: #00ff96 !important;
+  text-decoration: none !important;
+  transform: scale(0.98) !important;
+}
+
+/* Genre Spotify container */
+.genre-spotify-container {
+  width: 100%;
+  max-width: 600px;
+  border: 2px solid rgba(0, 255, 150, 0.3);
+  border-radius: 8px;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(3px);
+  position: relative;
+}
+
+/* Spotify iframe styling */
+.genre-spotify-iframe {
+  border-radius: 4px;
+  filter: contrast(1.1) brightness(0.9);
+}
+
+/* Responsive adjustments for genre pages */
+@media (max-width: 768px) {
+  .genre-title {
+    font-size: 24px;
+    letter-spacing: 2px;
+  }
+
+  .genre-spotify-link {
+    min-width: 150px;
+    font-size: 14px;
+    padding: 10px 20px;
+  }
+
+  .genre-container {
+    padding: 0 20px;
+  }
+
+  .genre-spotify-container {
+    padding: 15px;
+  }
+
+  .genre-back-button {
+    min-width: 100px;
+    font-size: 12px;
+    padding: 6px 12px;
+  }
 }

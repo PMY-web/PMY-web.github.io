@@ -1,17 +1,49 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
   <meta charset="UTF-8">
+  <title>pmy</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Roboto+Mono:wght@400;700&family=Noto+Sans+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-<body style="background-color:black; font-family: monospace;">
-<h1 style="color:white;">Ders</h1>
+<body>
+  <div class="ders-container">
+    <h1 id="title">Dersler</h1>
+
+    <div class="ders-cards-container">
+      <a href="Ders/SinyalAkisi2/SADB2.html" class="ders-card-link">
+        <div class="ders-card">
+          <h2>Sinyal Akışı ve Donanım Bilgisi 2</h2>
+          <p>TEK206</p>
+        </div>
+      </a>
+
+      <a href="Ders/UEMTurleri/UEMTurleri.html" class="ders-card-link">
+        <div class="ders-card">
+          <h2>Uygulamalı Elektronik Müzik Türleri</h2>
+          <p>TEK323</p>
+        </div>
+      </a>
+
+      <a href="Ders/MeslekiMat/MeslekiMat.html" class="ders-card-link">
+        <div class="ders-card">
+          <h2>Mesleki Matematik</h2>
+          <p>TEK103</p>
+        </div>
+      </a>
+    </div>
+
+    <div style="margin-top: 30px; text-align: center;">
+      <a href="index.html" class="uem-genre-link">↵</a>
+    </div>
+  </div>
+
+  <script>
+    // Glitch effect for the title
+    function a(){const b=document.getElementById('title');b.classList.add('glitch');setTimeout(()=>b.classList.remove('glitch'),150)}function c(){setTimeout(()=>{a();c()},Math.random()*8000+4000)}window.addEventListener('load',()=>c())
+  </script>
 </body>
-<a href="Ders/SinyalAkisi1/SADB1.html">Sinyal Akışı ve Donanım Bilgisi 1</a> 
-<br>
-<a href="Ders/SinyalAkisi2/SADB2.html">Sinyal Akışı ve Donanım Bilgisi 2</a> 
-<br>
-<a href="Ders/UEMTurleri/UEMTurleri.html">Uygulamalı Elektronik Müzik Türleri</a> 
-<br>
-<a href="Ders/MeslekiMat/MeslekiMat.html">Mesleki Matematik</a>
 </html>
