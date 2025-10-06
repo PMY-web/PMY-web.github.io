@@ -10,7 +10,7 @@ body {
   margin: 0;
   padding: 0;
   position: relative;
-  overflow: hidden;
+  overflow: auto;
   font-family: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'Liberation Mono', 'DejaVu Sans Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
   color: white;
 }
