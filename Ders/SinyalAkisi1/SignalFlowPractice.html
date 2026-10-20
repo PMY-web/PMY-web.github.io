@@ -390,7 +390,7 @@
       selfConnect: 'A device cannot be connected to itself.',
       plugged: (a, b) => `Cable ${a} → ${b} plugged in. Now pick the connectors and solder the wires below.`,
       needOut: 'To connect this input, first click an output port (right side of a device) to start a cable.',
-      rackHelp: 'Drag devices to move them. Drag from an <b>output port</b> (right side) to an <b>input port</b> (left side) to connect a cable. Click a cable to edit it.',
+      rackHelp: 'Drag devices to move them. Drag from an <b>output port</b> (right side) to an <b>input port</b> (left side) to connect a cable. Click a cable to edit it; press <b>Delete</b> to remove the selected cable.',
       rackEmpty: 'Add a source, a processor or a destination with the buttons above.',
       inLbl: 'in', outLbl: 'out', pin3: ' (pin 3 hot)',
       stOut: 'out: ', stNone: 'in: nothing connected', stHears: 'hears: ', stIn: 'in: ',
@@ -477,7 +477,7 @@
       selfConnect: 'Bir cihaz kendisine bağlanamaz.',
       plugged: (a, b) => `${a} → ${b} kablosu takıldı. Şimdi aşağıdan konnektörleri seçin ve telleri lehimleyin.`,
       needOut: 'Bu girişi bağlamak için önce bir çıkış portuna (cihazın sağ tarafı) tıklayarak bir kablo başlatın.',
-      rackHelp: 'Cihazları sürükleyerek taşıyın. Kablo bağlamak için bir <b>çıkış portundan</b> (sağ taraf) bir <b>giriş portuna</b> (sol taraf) sürükleyin. Düzenlemek için bir kabloya tıklayın.',
+      rackHelp: 'Cihazları sürükleyerek taşıyın. Kablo bağlamak için bir <b>çıkış portundan</b> (sağ taraf) bir <b>giriş portuna</b> (sol taraf) sürükleyin. Düzenlemek için bir kabloya tıklayın; seçili kabloyu silmek için <b>Delete</b> tuşuna basın.',
       rackEmpty: 'Yukarıdaki düğmelerle bir kaynak, işlemci ya da hedef ekleyin.',
       inLbl: 'giriş', outLbl: 'çıkış', pin3: ' (pin 3 hot)',
       stOut: 'çıkış: ', stNone: 'giriş: bağlı değil', stHears: 'duyduğu: ', stIn: 'giriş: ',
@@ -1696,6 +1696,14 @@
   window.addEventListener('resize', () => renderRack(simulate()));
   window.addEventListener('keydown', e => {
     if (e.key === 'Escape' && S.pending) { S.pending = null; render(); }
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      const tg = e.target;
+      if (tg && (tg.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName))) return;
+      const cab = selCable();
+      if (!cab) return;
+      e.preventDefault();
+      mutate(() => { S.cables = S.cables.filter(c => c !== cab); S.sel = null; S.pending = null; S.msg = ''; });
+    }
   });
 
   // ---------- start ----------
