@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Signal Flow Practice</title>
+  <link rel="icon" type="image/x-icon" href="../../favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Roboto+Mono:wght@400;700&family=Noto+Sans+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --bg2: #111111;
+      --panel: rgba(14, 22, 18, 0.94);
+      --line: #1d3f30;
+      --line2: #2c6a4f;
+      --accent: #00ff96;
+      --accent-dim: #00cc77;
+      --text: #e8fff4;
+      --dim: #86a99a;
+      --hot: #ff5c7a;
+      --cold: #5cb8ff;
+      --shield: #b8b8b8;
+      --warn: #ffb347;
+      --fault: #ff4d4d;
+      --font: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'DejaVu Sans Mono', Consolas, Monaco, 'Courier New', monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: linear-gradient(45deg, var(--bg) 25%, var(--bg2) 25%, var(--bg2) 50%, var(--bg) 50%, var(--bg) 75%, var(--bg2) 75%, var(--bg2));
+      background-size: 20px 20px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 150, 0.03) 2px, rgba(0, 255, 150, 0.03) 4px);
+      pointer-events: none;
+      z-index: 50;
+    }
+    .wrap { max-width: 1240px; margin: 0 auto; padding: 16px; }
+    button, select, input { font-family: inherit; font-size: 13px; }
+
+    header.top { display: flex; align-items: center; gap: 16px; margin: 4px 0 14px; }
+    header.top h1 {
+      margin: 0; font-size: 24px; letter-spacing: 3px; text-transform: uppercase;
+      text-shadow: 0 0 10px var(--accent);
+    }
+    header.top .sub { margin: 2px 0 0; color: var(--dim); font-size: 12px; }
+    .back {
+      color: var(--accent); text-decoration: none; font-weight: bold; font-size: 20px;
+      border: 2px solid var(--line2); padding: 4px 12px; border-radius: 4px;
+    }
+    .back:hover { background: var(--accent); color: #000; }
+
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+    .toolbar .sp { flex: 1; }
+    .btn {
+      background: transparent; color: var(--accent); border: 1px solid var(--line2);
+      padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; letter-spacing: 1px;
+    }
+    .btn:hover { border-color: var(--accent); box-shadow: 0 0 8px rgba(0, 255, 150, 0.35); }
+    .btn.primary { background: var(--accent); color: #000; border-color: var(--accent); }
+    .btn.primary:hover { background: var(--accent-dim); }
+    .btn.danger { color: var(--fault); border-color: #5a2626; }
+    .btn.danger:hover { border-color: var(--fault); box-shadow: 0 0 8px rgba(255, 77, 77, 0.35); }
+    .btn:disabled { opacity: 0.35; cursor: default; box-shadow: none; }
+    .seg { display: inline-flex; border: 1px solid var(--line2); border-radius: 4px; overflow: hidden; }
+    .seg button {
+      background: transparent; color: var(--dim); border: 0; padding: 6px 12px; cursor: pointer; font-weight: bold;
+      border-right: 1px solid var(--line2);
+    }
+    .seg button:last-child { border-right: 0; }
+    .seg button.on { background: var(--accent); color: #000; }
+    .seg button:not(.on):hover { color: var(--accent); }
+    .seg button:disabled { opacity: 0.35; cursor: default; }
+    select, input[type=text] {
+      background: #0b120f; color: var(--text); border: 1px solid var(--line2); border-radius: 4px; padding: 6px 8px;
+      max-width: 100%;
+    }
+
+    .panel {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; margin-bottom: 12px;
+      position: relative; z-index: 2;
+    }
+    .panel h2 { margin: 0 0 8px; font-size: 15px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); }
+    .muted { color: var(--dim); }
+    .small { font-size: 12px; }
+
+    /* question */
+    .qhead { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; }
+    .qnum { color: var(--dim); font-size: 12px; letter-spacing: 1px; }
+    .qtext { margin: 6px 0 10px; max-width: 900px; }
+    .qbtns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .hint { border-left: 3px solid var(--cold); padding: 6px 10px; margin: 10px 0 0; color: #cfe7ff; background: rgba(92, 184, 255, 0.07); }
+    .result { margin-top: 10px; padding: 10px 12px; border-radius: 6px; }
+    .result.ok { border: 1px solid var(--accent); background: rgba(0, 255, 150, 0.08); }
+    .result.bad { border: 1px solid var(--fault); background: rgba(255, 77, 77, 0.07); }
+    .result ul { margin: 6px 0 0; padding-left: 20px; }
+
+    /* rack */
+    .rackpanel { padding: 0; overflow: hidden; }
+    .rack { overflow: auto; height: 380px; position: relative; }
+    .rack-inner { position: relative; min-height: 100%; }
+    .rack-inner svg.wires { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
+    .cab { fill: none; stroke: var(--accent); stroke-width: 3; opacity: 0.75; }
+    .cab.sel { stroke: #fff; opacity: 1; filter: drop-shadow(0 0 4px var(--accent)); }
+    .cab.bad { stroke: var(--fault); }
+    .cab-hit { fill: none; stroke: transparent; stroke-width: 16; pointer-events: stroke; cursor: pointer; }
+    .cab-label { fill: var(--dim); font-size: 11px; font-family: var(--font); }
+    .cab-end { fill: var(--accent); }
+    .rack-msg { padding: 8px 16px; border-top: 1px solid var(--line); color: var(--dim); font-size: 12px; min-height: 36px; }
+    .rack-msg b { color: var(--accent); }
+
+    .card {
+      position: absolute; width: 180px; min-height: 92px; background: #0e1813; border: 1px solid var(--line2);
+      border-radius: 8px; padding: 8px 14px 8px; cursor: grab; user-select: none; touch-action: none;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+    }
+    .card.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 0 14px rgba(0, 255, 150, 0.3); }
+    .card.bad { border-color: var(--fault); }
+    .card .ttl { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card .ttl .lt { display: inline-block; background: var(--accent); color: #000; padding: 0 6px; border-radius: 3px; margin-right: 6px; }
+    .card .kind { font-size: 10px; color: var(--dim); letter-spacing: 1px; text-transform: uppercase; }
+    .card .ports { font-size: 11px; color: var(--text); margin-top: 4px; }
+    .card .ports div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card .stat { font-size: 11px; color: var(--accent); margin-top: 4px; border-top: 1px dashed var(--line2); padding-top: 4px; word-break: break-word; }
+    .card .stat.bad { color: var(--fault); }
+    .port {
+      position: absolute; top: 34px; width: 20px; height: 20px; border-radius: 50%; padding: 0;
+      background: #071009; border: 2px solid var(--accent); cursor: pointer;
+    }
+    .port::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: var(--line2); }
+    .port.used::after { background: var(--accent); }
+    .port.in { left: -11px; }
+    .port.out { right: -11px; }
+    .port:hover { box-shadow: 0 0 10px var(--accent); }
+    .port.target { animation: pulse 1s infinite; }
+    @keyframes pulse { 50% { box-shadow: 0 0 14px var(--accent); transform: scale(1.15); } }
+
+    .grid { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr); gap: 12px; }
+    .grid .panel { margin-bottom: 0; }
+    @media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+    /* inspector */
+    .row { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin: 6px 0; }
+    .row > label, .lbl { color: var(--dim); font-size: 12px; min-width: 110px; }
+    .cfg { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 10px 0; }
+    .cfg > div { display: flex; flex-direction: column; gap: 4px; }
+    .diagram-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: #070d0a; }
+    svg.diagram { display: block; width: 100%; min-width: 640px; height: auto; font-family: var(--font); }
+    .dbox { fill: #0e1813; stroke: var(--line2); }
+    .pbox { fill: #161616; stroke: #555; }
+    .jacket { fill: #141414; stroke: #333; }
+    .dtitle { fill: var(--accent); font-size: 13px; font-weight: bold; text-anchor: middle; }
+    .dsub { fill: var(--dim); font-size: 10px; text-anchor: middle; }
+    .nlabel { fill: var(--text); font-size: 12px; }
+    .vlabel { font-size: 10.5px; }
+    .val-sig { fill: var(--accent); }
+    .val-gnd { fill: #9a9a9a; }
+    .val-bad { fill: var(--fault); font-weight: bold; }
+    .val-open { fill: #4c5f57; }
+    .mate { stroke: #3d7f62; stroke-width: 2; stroke-dasharray: 4 3; }
+    .mate.note { stroke: var(--warn); }
+    .contact { fill: #0b120f; stroke: var(--accent); stroke-width: 2; }
+    .node { fill: #0b120f; stroke-width: 2.5; cursor: pointer; }
+    .node.pin { stroke: #ddd; }
+    .node:hover { filter: drop-shadow(0 0 4px #fff); }
+    .node.pending { fill: #fff; filter: drop-shadow(0 0 6px #fff); }
+    .wire { fill: none; stroke-width: 3.5; stroke-linecap: round; }
+    .wire-hit { fill: none; stroke: transparent; stroke-width: 14; cursor: pointer; }
+    .wire-hit:hover + .wire, .wire.hl { stroke-dasharray: 6 4; }
+    .nc { fill: #555; font-size: 12px; text-anchor: middle; }
+
+    .issues { list-style: none; margin: 8px 0 0; padding: 0; }
+    .issues li { padding: 4px 0 4px 22px; position: relative; font-size: 12.5px; }
+    .issues li::before { position: absolute; left: 0; top: 4px; font-weight: bold; }
+    .issues li.fault { color: #ffb0b0; }
+    .issues li.fault::before { content: '✖'; color: var(--fault); }
+    .issues li.warn { color: #ffe0b8; }
+    .issues li.warn::before { content: '!'; color: var(--warn); left: 4px; }
+    .issues li.info { color: var(--dim); }
+    .issues li.info::before { content: 'i'; color: var(--cold); left: 4px; }
+    .issues li.ok { color: var(--accent); }
+    .issues li.ok::before { content: '✓'; color: var(--accent); }
+    .hears { margin: 4px 0; font-size: 12.5px; }
+    .hears b { color: var(--accent); }
+    .rep-block { border-top: 1px dashed var(--line); padding-top: 8px; margin-top: 8px; }
+    .rep-block:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+
+    details.help summary { cursor: pointer; color: var(--accent); font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+    details.help h3 { color: var(--accent); font-size: 13px; margin: 16px 0 4px; }
+    details.help table { border-collapse: collapse; font-size: 12.5px; margin: 4px 0; }
+    details.help td, details.help th { border: 1px solid var(--line); padding: 4px 10px; text-align: left; }
+    details.help th { color: var(--dim); font-weight: normal; }
+    details.help ul { margin: 4px 0; padding-left: 20px; }
+    .tblwrap { overflow-x: auto; }
+    kbd { border: 1px solid var(--line2); border-radius: 3px; padding: 0 4px; font-family: inherit; }
+    .node { touch-action: none; }
+    svg.diagram.compact { min-width: 420px; max-width: 560px; margin: 0 auto; }
+    .node.drop-ok { fill: var(--accent); filter: drop-shadow(0 0 6px var(--accent)); }
+    .node.drag-src { fill: #fff; }
+    .drag-wire { fill: none; stroke-width: 3.5; stroke-linecap: round; stroke-dasharray: 7 5; pointer-events: none; }
+    .port.out { touch-action: none; cursor: crosshair; }
+    .port.drop-ok { background: var(--accent); transform: scale(1.3); box-shadow: 0 0 16px var(--accent); animation: none; }
+    .drag-cab { stroke-dasharray: 8 5; }
+    .langseg { margin-left: auto; }
+    html[lang="tr"] .lang-en, html[lang="en"] .lang-tr { display: none; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="back" href="SADB1.html" id="backLink">↵</a>
+    <div>
+      <h1 id="hTitle">Signal Flow Practice</h1>
+      <p class="sub" id="hSub"></p>
+    </div>
+    <div class="seg langseg" id="langSeg" aria-label="Language / Dil">
+      <button data-lang="en">EN</button>
+      <button data-lang="tr">TR</button>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="seg" id="modeSeg">
+      <button data-mode="sandbox"></button>
+      <button data-mode="quiz"></button>
+    </div>
+    <select id="qSelect" aria-label="Question"></select>
+    <span class="sp"></span>
+    <button class="btn" data-add="src"></button>
+    <button class="btn" data-add="proc"></button>
+    <button class="btn" data-add="dst"></button>
+    <button class="btn danger" id="resetBtn"></button>
+  </div>
+
+  <section class="panel" id="question"></section>
+
+  <section class="panel rackpanel">
+    <div class="rack" id="rack"><div class="rack-inner" id="rackInner"></div></div>
+    <div class="rack-msg" id="rackMsg"></div>
+  </section>
+
+  <div class="grid">
+    <section class="panel" id="inspector"></section>
+    <section class="panel" id="report"></section>
+  </div>
+
+  <details class="panel help" style="margin-top:12px">
+    <summary><span class="lang-en">How it works (pinouts and rules)</span><span class="lang-tr">Nasıl çalışır (pin dizilimleri ve kurallar)</span></summary>
+
+    <div class="lang-en">
+      <h3>Standard pinouts</h3>
+      <div class="tblwrap"><table>
+        <tr><th>Connector</th><th>Unbalanced mono</th><th>Balanced mono</th><th>Unbalanced stereo</th></tr>
+        <tr><td>TS</td><td>Tip = signal, Sleeve = ground</td><td>Tip = hot, Sleeve = ground (cold is shorted to ground)</td><td>Tip = L, Sleeve = ground (R is shorted to ground)</td></tr>
+        <tr><td>TRS</td><td>Tip = signal, Ring + Sleeve = ground</td><td>Tip = hot, Ring = cold, Sleeve = ground</td><td>Tip = L, Ring = R, Sleeve = ground</td></tr>
+        <tr><td>XLR</td><td>Pin 2 = signal, Pin 1 = ground, Pin 3 not connected</td><td>Pin 2 = hot, Pin 3 = cold, Pin 1 = ground (AES)</td><td>Pin 2 = L, Pin 3 = R, Pin 1 = ground (non-standard)</td></tr>
+      </table></div>
+      <ul class="small">
+        <li>A <b>TS plug in a stereo or balanced jack</b>: the long sleeve also touches the jack's ring contact, so that contact is shorted to ground.</li>
+        <li>A <b>TRS plug in a mono jack</b>: the ring touches the jack's ground contact.</li>
+        <li>Some old devices are wired <b>pin 3 hot</b>: on their XLR, pin 3 is hot and pin 2 is cold. You can switch this on for any balanced port in the sandbox.</li>
+      </ul>
+      <h3>Cables</h3>
+      <ul class="small">
+        <li><b>2-way</b>: one core (Hot) plus Shield. It can carry one unbalanced signal.</li>
+        <li><b>3-way</b>: two cores (Hot, Cold) plus Shield. It can carry one balanced signal or two unbalanced signals (for example stereo L/R).</li>
+        <li>You can solder several pins to the same conductor (for example Ring and Sleeve both to Shield). Every extra link joins those points together electrically.</li>
+      </ul>
+      <h3>How devices read and send signals</h3>
+      <ul class="small">
+        <li>An <b>unbalanced input</b> hears its signal contact minus its ground. If there is no ground connection to the sending device, there is no return path and no usable signal.</li>
+        <li>A <b>balanced input</b> hears (Hot − Cold) ÷ 2. Signal on both legs in opposite polarity comes through at full level. An unbalanced signal into a balanced input (cold tied to ground) comes through at −6 dB, which is normal.</li>
+        <li>A <b>balanced output</b> sends +x on hot and −x on cold.</li>
+        <li><b>Processors</b>: mono in → stereo out copies the signal to L and R. Stereo in → mono out mixes (L + R) ÷ 2.</li>
+        <li>Signals are named after the source device: <b>A.L</b>, <b>A.R</b> for a stereo source, <b>A.M</b> for a mono source. <b>−A.R</b> means A.R with inverted polarity.</li>
+      </ul>
+      <h3>Problems that are detected</h3>
+      <ul class="small">
+        <li><b style="color:var(--fault)">Faults</b> (a question fails): an unbalanced output shorted to ground, two outputs tied together, an input that the device reads left floating, or an unbalanced link with no ground.</li>
+        <li><b style="color:var(--warn)">Warnings</b> (a question can still pass): a balanced output leg shorted to ground, or a balanced link with no shield.</li>
+      </ul>
+    </div>
+
+    <div class="lang-tr">
+      <h3>Standart pin dizilimleri</h3>
+      <div class="tblwrap"><table>
+        <tr><th>Konnektör</th><th>Dengesiz mono</th><th>Dengeli mono</th><th>Dengesiz stereo</th></tr>
+        <tr><td>TS</td><td>Tip = sinyal, Sleeve = toprak</td><td>Tip = hot, Sleeve = toprak (cold toprağa kısa devre olur)</td><td>Tip = L, Sleeve = toprak (R toprağa kısa devre olur)</td></tr>
+        <tr><td>TRS</td><td>Tip = sinyal, Ring + Sleeve = toprak</td><td>Tip = hot, Ring = cold, Sleeve = toprak</td><td>Tip = L, Ring = R, Sleeve = toprak</td></tr>
+        <tr><td>XLR</td><td>Pin 2 = sinyal, Pin 1 = toprak, Pin 3 boşta</td><td>Pin 2 = hot, Pin 3 = cold, Pin 1 = toprak (AES)</td><td>Pin 2 = L, Pin 3 = R, Pin 1 = toprak (standart dışı)</td></tr>
+      </table></div>
+      <ul class="small">
+        <li><b>Stereo ya da dengeli jaka takılan TS fiş</b>: uzun sleeve kısmı jakın ring kontağına da değer, yani o kontak toprağa kısa devre olur.</li>
+        <li><b>Mono jaka takılan TRS fiş</b>: ring kısmı jakın toprak kontağına değer.</li>
+        <li>Bazı eski cihazlar <b>pin 3 hot</b> bağlanmıştır: XLR'lerinde pin 3 hot, pin 2 cold'dur. Serbest modda bunu herhangi bir dengeli port için açabilirsiniz.</li>
+      </ul>
+      <h3>Kablolar</h3>
+      <ul class="small">
+        <li><b>2 iletkenli</b>: bir damar (Hot) ve Shield. Tek bir dengesiz sinyal taşıyabilir.</li>
+        <li><b>3 iletkenli</b>: iki damar (Hot, Cold) ve Shield. Tek bir dengeli sinyal ya da iki dengesiz sinyal (örneğin stereo L/R) taşıyabilir.</li>
+        <li>Birden fazla pini aynı iletkene lehimleyebilirsiniz (örneğin Ring ve Sleeve ikisi de Shield'a). Her ek bağlantı o noktaları elektriksel olarak birleştirir.</li>
+      </ul>
+      <h3>Cihazlar sinyali nasıl okur ve gönderir</h3>
+      <ul class="small">
+        <li><b>Dengesiz giriş</b>, sinyal kontağı ile toprağı arasındaki farkı duyar. Gönderen cihazla toprak bağlantısı yoksa dönüş yolu yoktur ve kullanılabilir sinyal gelmez.</li>
+        <li><b>Dengeli giriş</b> (Hot − Cold) ÷ 2 değerini duyar. İki bacakta zıt polaritede gelen sinyal tam seviyede geçer. Dengeli girişe gelen dengesiz sinyal (cold toprağa bağlı) −6 dB ile geçer; bu normaldir.</li>
+        <li><b>Dengeli çıkış</b> hot üzerinden +x, cold üzerinden −x gönderir.</li>
+        <li><b>İşlemciler</b>: mono giriş → stereo çıkış sinyali L ve R'ye kopyalar. Stereo giriş → mono çıkış (L + R) ÷ 2 toplamını verir.</li>
+        <li>Sinyaller kaynak cihazın adını taşır: stereo kaynak için <b>A.L</b>, <b>A.R</b>; mono kaynak için <b>A.M</b>. <b>−A.R</b>, polaritesi ters çevrilmiş A.R demektir.</li>
+      </ul>
+      <h3>Tespit edilen sorunlar</h3>
+      <ul class="small">
+        <li><b style="color:var(--fault)">Hatalar</b> (soru başarısız olur): toprağa kısa devre edilmiş dengesiz çıkış, birbirine bağlanmış iki çıkış, cihazın okuduğu bir girişin boşta (floating) kalması ya da toprağı olmayan dengesiz bağlantı.</li>
+        <li><b style="color:var(--warn)">Uyarılar</b> (soru yine geçebilir): toprağa kısa devre edilmiş dengeli çıkış bacağı ya da shield'ı olmayan dengeli bağlantı.</li>
+      </ul>
+    </div>
+  </details>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------- language ----------
+  const LANG_KEY = 'pmy-signal-flow-lab-lang';
+  let lang = 'en';
+  try {
+    const saved = localStorage.getItem(LANG_KEY);
+    lang = saved === 'tr' || saved === 'en' ? saved : ((navigator.language || '').toLowerCase().startsWith('tr') ? 'tr' : 'en');
+  } catch (e) { /* storage unavailable */ }
+
+  // tx picks the current language from an {en, tr} object; plain strings pass through
+  const tx = o => (o && typeof o === 'object') ? (o[lang] || o.en) : o;
+
+  const L10N = {
+    en: {
+      pageTitle: 'Signal Flow Practice',
+      sub: 'device → connector → cable → connector → device',
+      back: 'Back to the course page',
+      sandbox: 'Sandbox', questions: 'Questions',
+      addSrc: '+ Source', addProc: '+ Processor', addDst: '+ Destination',
+      resetSandbox: 'Reset sandbox', clearCables: 'Clear cables',
+      confirmReset: 'Remove all devices and cables from the sandbox?',
+      port_um: 'Unbalanced mono', port_bm: 'Balanced mono', port_us: 'Unbalanced stereo',
+      c_S: 'signal', c_G: 'ground', 'c_+': 'hot (+)', 'c_-': 'cold (−)', c_L: 'left', c_R: 'right',
+      kind_src: 'Source', kind_proc: 'Processor', kind_dst: 'Destination',
+      silence: 'silence', noSignal: 'no signal',
+      condName: c => `${c} conductor`,
+      contactOf: (d, c) => `${d}'s ${c} contact`,
+      pinAt: (p, d) => d ? `${p} at ${d} end` : `${p} at the far end`,
+      noteTs: c => `the TS sleeve also touches the jack's ${c} contact, shorting it to ground`,
+      noteTrs: 'in a mono jack the TRS ring touches the ground contact',
+      plugNote: (plug, d, note) => `${plug} plug in ${d}'s jack: ${note}.`,
+      outputOf: (d, c) => `${d}'s ${c} output`,
+      via: list => ` (through ${list})`, viaJack: ' (inside the jack)',
+      balShort: (who, via) => `${who} is shorted to ground${via}. Many balanced outputs tolerate this, but it is not ideal.`,
+      unbShort: (who, via) => `${who} is shorted to ground${via}. Never short an unbalanced output.`,
+      and: ' and ',
+      clash: (d, list) => `${d}'s outputs ${list} are tied together. Never connect two outputs to each other; use a mixer to combine signals.`,
+      gndToSig: (d, s) => `${d}'s ground is connected to a signal from ${s} instead of to ${s}'s ground.`,
+      noShield: (s, d) => `Ground/shield is not connected between ${s} and ${d}. The balanced signal still passes, but the cable has no working shield (more hum, no phantom power).`,
+      noGround: (s, d) => `Ground is not connected between ${s} and ${d}. An unbalanced signal needs ground as its return path, so ${d} gets no usable signal.`,
+      floatLocal: (d, c, s) => `${d}'s ${c} input is only connected to ${d}'s own ground, which is not connected to ${s}.`,
+      floating: (d, c) => `${d}'s ${c} input is floating (nothing drives it). It will pick up hum and noise. Connect it to a signal or to ground.`,
+      hotColdJoined: d => `Hot and cold are joined together at ${d}'s input, so the signal cancels out.`,
+      loop: 'This cable is part of a feedback loop (a device feeds its own input).',
+      noCable: (f, to) => `There is no cable from ${f}'s output to ${to}'s input.`,
+      where: (a, f, b, to) => `(it has ${a} at ${f} and ${b} at ${to})`,
+      needPlugs: (f, to, p1, p2, w) => `The ${f} → ${to} cable must use one ${p1} and one ${p2} connector ${w}.`,
+      needAt: (f, to, plug, end, w) => `The ${f} → ${to} cable needs ${plug} at ${end} ${w}.`,
+      needType: (f, to, n) => `The ${f} → ${to} cable must be a ${n}-way cable.`,
+      ch_M: 'input', ch_L: 'left channel', ch_R: 'right channel',
+      chNone: (d, ch, want) => `${d}'s ${ch} gets no usable signal. It should get ${want}.`,
+      chWrong: (d, ch, got, want, multi) => `${d}'s ${ch} gets ${got}, but it should get ${want}${multi ? ' (equal amounts, same polarity)' : ''}.`,
+      chLevel: (d, ch, db) => `${d}'s ${ch} level is ${db} relative to the source.`,
+      warnPrefix: 'Warning: ',
+      startQ: l => `Start by dragging a cable from the output port (right side) of ${l}.`,
+      newCable: l => `New cable from <b>${l}</b>. Now click the input port (left side) of the device it should go to.`,
+      selfConnect: 'A device cannot be connected to itself.',
+      plugged: (a, b) => `Cable ${a} → ${b} plugged in. Now pick the connectors and solder the wires below.`,
+      needOut: 'To connect this input, first click an output port (right side of a device) to start a cable.',
+      rackHelp: 'Drag devices to move them. Drag from an <b>output port</b> (right side) to an <b>input port</b> (left side) to connect a cable. Click a cable to edit it.',
+      rackEmpty: 'Add a source, a processor or a destination with the buttons above.',
+      inLbl: 'in', outLbl: 'out', pin3: ' (pin 3 hot)',
+      stOut: 'out: ', stNone: 'in: nothing connected', stHears: 'hears: ', stIn: 'in: ',
+      portTitle: (d, io, label) => `${d} ${io === 'in' ? 'input' : 'output'}: ${label}`,
+      inspector: 'Inspector', selectSomething: 'Select a device or a cable.',
+      inspHelp: 'To make a cable, drag from a device\'s <b style="color:var(--accent)">output port</b> (the dot on its right side) to another device\'s <b style="color:var(--accent)">input port</b> (the dot on its left side). The cable opens here: choose a connector for each end, choose a 2-way or 3-way cable, and solder each pin to a conductor.',
+      name: 'Name', input: 'Input', output: 'Output', xlrWiring: 'XLR wiring', pin3Label: 'pin 3 hot (old non-standard gear)',
+      sends: 'Sends: ',
+      procSum: 'Mixes its stereo input to mono: (L + R) ÷ 2.',
+      procDup: 'Copies its mono input to both L and R.',
+      procPass: 'Passes its input straight to its output.',
+      procBal: ' The balanced output sends +x on hot and −x on cold.',
+      locked: 'This device is part of the question, so you can\'t change its ports.',
+      delDev: 'Delete device',
+      cableTitle: (a, b) => `Cable ${a} → ${b}`,
+      from: 'From', to: 'To', notPlugged: '(not plugged in)',
+      fromText: (l, n, label) => `<b>${l}</b> ${n}, ${label} out`,
+      targetOpt: (l, n, label) => `${l}: ${n} (${label} in)`,
+      connAt: d => d ? `Connector at ${d}` : 'Connector at far end',
+      cable: 'Cable', way: n => `${n}-way`,
+      pendingTip: (what, cond) => `Selected <b style="color:#fff">${what}</b>. Now click a ${cond ? 'plug pin' : 'conductor end'} on the same side to solder a wire (or click it again to cancel).`,
+      wireTip: 'Solder a wire: drag from a plug pin to a conductor end on the same side (or the other way round). Clicking one and then the other also works. Click a wire to remove it.',
+      jackTip: 'Dashed lines show how each plug meets the jack on the device; orange ones are unintended contacts.',
+      showJack: 'Show jack contacts', hideJack: 'Hide jack contacts',
+      jackHintTitle: 'Hint: show how each plug pin meets the device jack, and the signal on every point',
+      clearWires: 'Clear wires', delCab: 'Delete cable',
+      plugFar: 'Plug the far end into a device input to hear the result.',
+      dOut: l => `${l} out`, dIn: l => `${l} in`, notPluggedShort: 'not plugged in',
+      nWayCable: n => `${n}-way cable`, pin3nc: 'pin 3 n/c',
+      condEnd: (c, d) => `${c} conductor (${d} end)`, far: 'far',
+      mateTitle: 'jack contact ↔ plug pin', removeWire: 'Click to remove: ', diagramLabel: 'Cable wiring diagram',
+      vGnd: 'GND', vShort: 'SHORT', vClash: 'CLASH', vDgnd: d => `GND ${d} only`, vOpen: 'open',
+      hears: d => `${d} hears:`, noUsable: 'no usable signal',
+      noProblems: 'No problems on this cable.', noFaults: 'No faults or warnings.',
+      report: 'Signal report', nothingYet: 'Nothing connected yet.', nothingPlugged: 'nothing plugged in',
+      sandboxIntro: 'Build any setup you like. Add sources, processors and destinations, choose their port types, then connect them with cables you wire yourself. Every input shows what it actually hears. Switch to <b style="color:var(--accent)">Questions</b> for guided exercises.',
+      qNum: (i, n) => `QUESTION ${i} / ${n}`,
+      check: 'Check answer', hint: 'Hint', hideHint: 'Hide hint', prev: '← Prev', next: 'Next →',
+      correct: '✓ Correct!', notYet: '✖ Not yet.'
+    },
+    tr: {
+      pageTitle: 'Sinyal Akışı Pratiği',
+      sub: 'cihaz → konnektör → kablo → konnektör → cihaz',
+      back: 'Ders sayfasına dön',
+      sandbox: 'Serbest mod', questions: 'Sorular',
+      addSrc: '+ Kaynak', addProc: '+ İşlemci', addDst: '+ Hedef',
+      resetSandbox: 'Serbest modu sıfırla', clearCables: 'Kabloları temizle',
+      confirmReset: 'Serbest moddaki tüm cihazlar ve kablolar silinsin mi?',
+      port_um: 'Dengesiz mono', port_bm: 'Dengeli mono', port_us: 'Dengesiz stereo',
+      c_S: 'sinyal', c_G: 'toprak', 'c_+': 'hot (+)', 'c_-': 'cold (−)', c_L: 'sol', c_R: 'sağ',
+      kind_src: 'Kaynak', kind_proc: 'İşlemci', kind_dst: 'Hedef',
+      silence: 'sessizlik', noSignal: 'sinyal yok',
+      condName: c => `${c} iletkeni`,
+      contactOf: (d, c) => `${d} cihazının ${c} kontağı`,
+      pinAt: (p, d) => d ? `${d} ucundaki ${p}` : `uzak uçtaki ${p}`,
+      noteTs: c => `TS fişin sleeve kısmı jakın ${c} kontağına da değer ve onu toprağa kısa devre eder`,
+      noteTrs: 'mono jakta TRS fişin ring kısmı toprak kontağına değer',
+      plugNote: (plug, d, note) => `${d} cihazının jakındaki ${plug} fiş: ${note}.`,
+      outputOf: (d, c) => `${d} cihazının ${c} çıkışı`,
+      via: list => ` (${list} üzerinden)`, viaJack: ' (jakın içinde)',
+      balShort: (who, via) => `${who} toprağa kısa devre${via}. Birçok dengeli çıkış bunu tolere eder, ama ideal değildir.`,
+      unbShort: (who, via) => `${who} toprağa kısa devre${via}. Dengesiz bir çıkış asla kısa devre edilmemelidir.`,
+      and: ' ve ',
+      clash: (d, list) => `${d} cihazının ${list} çıkışları birbirine bağlı. İki çıkışı asla birbirine bağlamayın; sinyalleri birleştirmek için mikser kullanın.`,
+      gndToSig: (d, s) => `${d} cihazının toprağı, ${s} cihazının toprağı yerine ${s} cihazından gelen bir sinyale bağlı.`,
+      noShield: (s, d) => `${s} ile ${d} arasında toprak/shield bağlı değil. Dengeli sinyal yine geçer, ama kablonun çalışan bir shield'ı yok (daha fazla uğultu, phantom power yok).`,
+      noGround: (s, d) => `${s} ile ${d} arasında toprak bağlı değil. Dengesiz sinyalin dönüş yolu olarak toprağa ihtiyacı vardır, bu yüzden ${d} cihazına kullanılabilir sinyal ulaşmaz.`,
+      floatLocal: (d, c, s) => `${d} cihazının ${c} girişi sadece ${d} cihazının kendi toprağına bağlı ve bu toprak ${s} cihazına bağlı değil.`,
+      floating: (d, c) => `${d} cihazının ${c} girişi boşta (floating), onu süren hiçbir şey yok. Uğultu ve gürültü toplar. Bir sinyale ya da toprağa bağlayın.`,
+      hotColdJoined: d => `${d} cihazının girişinde hot ve cold birbirine bağlı, bu yüzden sinyal kendini yok ediyor.`,
+      loop: 'Bu kablo bir geri besleme döngüsünün parçası (bir cihaz kendi girişini besliyor).',
+      noCable: (f, to) => `${f} cihazının çıkışından ${to} cihazının girişine giden bir kablo yok.`,
+      where: (a, f, b, to) => `(şu an ${f} ucunda ${a}, ${to} ucunda ${b} var)`,
+      needPlugs: (f, to, p1, p2, w) => `${f} → ${to} kablosunda bir ${p1} ve bir ${p2} konnektör olmalı ${w}.`,
+      needAt: (f, to, plug, end, w) => `${f} → ${to} kablosunun ${end} ucunda ${plug} olmalı ${w}.`,
+      needType: (f, to, n) => `${f} → ${to} kablosu ${n} iletkenli olmalı.`,
+      ch_M: 'girişi', ch_L: 'sol kanalı', ch_R: 'sağ kanalı',
+      chNone: (d, ch, want) => `${d} cihazının ${ch} kullanılabilir bir sinyal almıyor. ${want} almalı.`,
+      chWrong: (d, ch, got, want, multi) => `${d} cihazının ${ch} şu an ${got} alıyor, ama ${want} almalı${multi ? ' (eşit miktarda, aynı polaritede)' : ''}.`,
+      chLevel: (d, ch, db) => `${d} cihazının ${ch} kaynağa göre ${db} seviyede.`,
+      warnPrefix: 'Uyarı: ',
+      startQ: l => `Başlamak için ${l} cihazının çıkış portundan (sağ taraf) bir kablo sürükleyin.`,
+      newCable: l => `<b>${l}</b> cihazından yeni kablo. Şimdi kablonun gideceği cihazın giriş portuna (sol taraf) tıklayın.`,
+      selfConnect: 'Bir cihaz kendisine bağlanamaz.',
+      plugged: (a, b) => `${a} → ${b} kablosu takıldı. Şimdi aşağıdan konnektörleri seçin ve telleri lehimleyin.`,
+      needOut: 'Bu girişi bağlamak için önce bir çıkış portuna (cihazın sağ tarafı) tıklayarak bir kablo başlatın.',
+      rackHelp: 'Cihazları sürükleyerek taşıyın. Kablo bağlamak için bir <b>çıkış portundan</b> (sağ taraf) bir <b>giriş portuna</b> (sol taraf) sürükleyin. Düzenlemek için bir kabloya tıklayın.',
+      rackEmpty: 'Yukarıdaki düğmelerle bir kaynak, işlemci ya da hedef ekleyin.',
+      inLbl: 'giriş', outLbl: 'çıkış', pin3: ' (pin 3 hot)',
+      stOut: 'çıkış: ', stNone: 'giriş: bağlı değil', stHears: 'duyduğu: ', stIn: 'giriş: ',
+      portTitle: (d, io, label) => `${d} ${io === 'in' ? 'girişi' : 'çıkışı'}: ${label}`,
+      inspector: 'Özellikler', selectSomething: 'Bir cihaz ya da kablo seçin.',
+      inspHelp: 'Kablo yapmak için bir cihazın <b style="color:var(--accent)">çıkış portundan</b> (sağ taraftaki nokta) başka bir cihazın <b style="color:var(--accent)">giriş portuna</b> (sol taraftaki nokta) sürükleyin. Kablo burada açılır: her uç için bir konnektör seçin, 2 ya da 3 iletkenli kablo seçin ve her pini bir iletkene lehimleyin.',
+      name: 'Ad', input: 'Giriş', output: 'Çıkış', xlrWiring: 'XLR bağlantısı', pin3Label: 'pin 3 hot (eski, standart dışı cihaz)',
+      sends: 'Gönderdiği: ',
+      procSum: 'Stereo girişini mono\'ya toplar: (L + R) ÷ 2.',
+      procDup: 'Mono girişini hem L hem R\'ye kopyalar.',
+      procPass: 'Girişini doğrudan çıkışına aktarır.',
+      procBal: ' Dengeli çıkış hot üzerinden +x, cold üzerinden −x gönderir.',
+      locked: 'Bu cihaz sorunun parçası, bu yüzden portları değiştirilemez.',
+      delDev: 'Cihazı sil',
+      cableTitle: (a, b) => `Kablo ${a} → ${b}`,
+      from: 'Nereden', to: 'Nereye', notPlugged: '(takılı değil)',
+      fromText: (l, n, label) => `<b>${l}</b> ${n}, ${label} çıkış`,
+      targetOpt: (l, n, label) => `${l}: ${n} (${label} giriş)`,
+      connAt: d => d ? `${d} ucundaki konnektör` : 'Uzak uçtaki konnektör',
+      cable: 'Kablo', way: n => `${n} iletkenli`,
+      pendingTip: (what, cond) => `Seçili: <b style="color:#fff">${what}</b>. Tel lehimlemek için aynı taraftaki bir ${cond ? 'fiş pinine' : 'iletken ucuna'} tıklayın (iptal etmek için tekrar tıklayın).`,
+      wireTip: 'Tel lehimlemek için bir fiş pininden aynı taraftaki bir iletken ucuna sürükleyin (ya da tersi). Önce birine, sonra diğerine tıklamak da olur. Teli kaldırmak için üzerine tıklayın.',
+      jackTip: 'Kesikli çizgiler her fişin cihaz jakına nasıl oturduğunu gösterir; turuncu olanlar istenmeyen temaslardır.',
+      showJack: 'Jak kontaklarını göster', hideJack: 'Jak kontaklarını gizle',
+      jackHintTitle: 'İpucu: her fiş pininin cihaz jakına nasıl oturduğunu ve her noktadaki sinyali gösterir',
+      clearWires: 'Telleri temizle', delCab: 'Kabloyu sil',
+      plugFar: 'Sonucu duymak için uzak ucu bir cihaz girişine takın.',
+      dOut: l => `${l} çıkış`, dIn: l => `${l} giriş`, notPluggedShort: 'takılı değil',
+      nWayCable: n => `${n} iletkenli kablo`, pin3nc: 'pin 3 boşta',
+      condEnd: (c, d) => `${c} iletkeni (${d} ucu)`, far: 'uzak',
+      mateTitle: 'jak kontağı ↔ fiş pini', removeWire: 'Kaldırmak için tıklayın: ', diagramLabel: 'Kablo bağlantı şeması',
+      vGnd: 'GND', vShort: 'KISA DEVRE', vClash: 'ÇAKIŞMA', vDgnd: d => `yalnız ${d} GND`, vOpen: 'açık',
+      hears: d => `${d} cihazının duyduğu:`, noUsable: 'kullanılabilir sinyal yok',
+      noProblems: 'Bu kabloda sorun yok.', noFaults: 'Hata ya da uyarı yok.',
+      report: 'Sinyal raporu', nothingYet: 'Henüz bir şey bağlı değil.', nothingPlugged: 'takılı bir şey yok',
+      sandboxIntro: 'İstediğiniz düzeneği kurun. Kaynak, işlemci ve hedef ekleyin, port türlerini seçin, sonra kendi lehimlediğiniz kablolarla bağlayın. Her giriş gerçekte ne duyduğunu gösterir. Yönlendirmeli alıştırmalar için <b style="color:var(--accent)">Sorular</b> moduna geçin.',
+      qNum: (i, n) => `SORU ${i} / ${n}`,
+      check: 'Cevabı kontrol et', hint: 'İpucu', hideHint: 'İpucunu gizle', prev: '← Önceki', next: 'Sonraki →',
+      correct: '✓ Doğru!', notYet: '✖ Henüz değil.'
+    }
+  };
+  function t(key, ...args) {
+    const v = key in L10N[lang] ? L10N[lang][key] : L10N.en[key];
+    return typeof v === 'function' ? v(...args) : v;
+  }
+
+  // ---------- model constants ----------
+  const PORTS = {
+    um: { contacts: ['S', 'G'], short: { S: 'Sig', G: 'Gnd' } },
+    bm: { contacts: ['+', '-', 'G'], short: { '+': 'Hot +', '-': 'Cold −', G: 'Gnd' } },
+    us: { contacts: ['L', 'R', 'G'], short: { L: 'L', R: 'R', G: 'Gnd' } }
+  };
+  const portLabel = pt => t('port_' + pt);
+  const cName = c => t('c_' + c);
+  const PLUGS = { TS: ['T', 'S'], TRS: ['T', 'R', 'S'], XLR: ['2', '3', '1'] };
+  const PIN_NAME = { T: 'Tip', R: 'Ring', S: 'Sleeve', 1: 'Pin 1', 2: 'Pin 2', 3: 'Pin 3' };
+  const PIN_ROW = { T: 0, R: 1, S: 2, 2: 0, 3: 1, 1: 2 };
+  const CONTACT_ROW = { S: 0, '+': 0, L: 0, '-': 1, R: 1, G: 2 };
+  const COND = {
+    H: { name: 'Hot', row: 0, color: 'var(--hot)' },
+    C: { name: 'Cold', row: 1, color: 'var(--cold)' },
+    SH: { name: 'Shield', row: 2, color: 'var(--shield)' }
+  };
+  const CARD_W = 180, PORT_Y = 44;
+  const condsOf = cab => cab.type === 3 ? ['H', 'C', 'SH'] : ['H', 'SH'];
+
+  // ---------- questions ----------
+  const QUESTIONS = [
+    {
+      title: { en: 'Stereo link, mixed connectors', tr: 'Karışık konnektörlerle stereo bağlantı' },
+      text: {
+        en: 'A has an unbalanced stereo output. B has an unbalanced stereo input. Connect them so B gets A.L on its left channel and A.R on its right channel. Use an XLR connector on one end of the cable and a TRS connector on the other.',
+        tr: 'A cihazının dengesiz stereo çıkışı, B cihazının dengesiz stereo girişi var. Bunları, B cihazının sol kanalına A.L, sağ kanalına A.R gelecek şekilde bağlayın. Kablonun bir ucunda XLR, diğer ucunda TRS konnektör kullanın.'
+      },
+      hint: {
+        en: 'TRS on a stereo jack: Tip = L, Ring = R, Sleeve = ground. XLR on a stereo port: Pin 2 = L, Pin 3 = R, Pin 1 = ground. Two signals plus ground need three conductors.',
+        tr: 'Stereo jakta TRS: Tip = L, Ring = R, Sleeve = toprak. Stereo portta XLR: Pin 2 = L, Pin 3 = R, Pin 1 = toprak. İki sinyal ve toprak için üç iletken gerekir.'
+      },
+      explain: {
+        en: 'Two unbalanced signals share one ground, so a 3-way cable is enough: L on one core, R on the other, ground on the shield.',
+        tr: 'İki dengesiz sinyal aynı toprağı paylaşır, bu yüzden 3 iletkenli kablo yeterli: L bir damarda, R diğerinde, toprak shield üzerinde.'
+      },
+      devices: [
+        { l: 'A', kind: 'src', name: { en: 'Synth', tr: 'Synth' }, out: 'us' },
+        { l: 'B', kind: 'dst', name: { en: 'Headphone amp', tr: 'Kulaklık amfisi' }, in: 'us' }
+      ],
+      links: [{ from: 'A', to: 'B', plugs: ['XLR', 'TRS'] }],
+      target: { dev: 'B', ch: { L: { 'A.L': 1 }, R: { 'A.R': 1 } } }
+    },
+    {
+      title: { en: 'Right channel only', tr: 'Sadece sağ kanal' },
+      text: {
+        en: 'A has an unbalanced stereo output. B has an unbalanced mono input. Using one TS and one XLR connector (you decide which end gets which), get only A.R into B.',
+        tr: 'A cihazının dengesiz stereo çıkışı, B cihazının dengesiz mono girişi var. Bir TS ve bir XLR konnektör kullanarak (hangisinin hangi uca takılacağına siz karar verin) B cihazına sadece A.R sinyalini ulaştırın.'
+      },
+      hint: {
+        en: 'A TS plug in a stereo jack only picks up the tip (L), and its sleeve shorts R to ground. So which end has to be the XLR?',
+        tr: 'Stereo jaka takılan TS fiş sadece tip kontağını (L) alır ve sleeve kısmı R kontağını toprağa kısa devre eder. O zaman XLR hangi uçta olmalı?'
+      },
+      explain: {
+        en: 'The TS plug can only go on B\'s end. At A, the XLR gives you access to R on pin 3. Leave pin 2 (L) unconnected; an unused output is fine to leave open.',
+        tr: 'TS fiş ancak B tarafına takılabilir. A tarafında XLR ile pin 3 üzerinden R sinyaline ulaşırsınız. Pin 2\'yi (L) boş bırakın; kullanılmayan bir çıkışı açık bırakmak sorun değildir.'
+      },
+      devices: [
+        { l: 'A', kind: 'src', name: { en: 'Media player', tr: 'Medya oynatıcı' }, out: 'us' },
+        { l: 'B', kind: 'dst', name: { en: 'Mono speaker', tr: 'Mono hoparlör' }, in: 'um' }
+      ],
+      links: [{ from: 'A', to: 'B', plugs: ['TS', 'XLR'] }],
+      target: { dev: 'B', ch: { M: { 'A.R': 1 } } }
+    },
+    {
+      title: { en: 'Inverted right through a DI', tr: 'DI kutusu üzerinden ters polariteli sağ kanal' },
+      text: {
+        en: 'A has an unbalanced stereo output. B is a DI box with an unbalanced mono input and a balanced mono output. C has a balanced mono input. Connect A → B → C so that at the end, C gets only the polarity-inverted version of A.R.',
+        tr: 'A cihazının dengesiz stereo çıkışı var. B, dengesiz mono girişi ve dengeli mono çıkışı olan bir DI kutusu. C cihazının dengeli mono girişi var. A → B → C bağlantısını, en sonda C cihazına sadece A.R sinyalinin polaritesi ters çevrilmiş hali ulaşacak şekilde kurun.'
+      },
+      hint: {
+        en: 'First get only A.R into B. B then sends +A.R on hot and −A.R on cold. A balanced input hears (Hot − Cold) ÷ 2. What happens if hot and cold are swapped in the second cable?',
+        tr: 'Önce B cihazına sadece A.R gönderin. B, hot üzerinden +A.R, cold üzerinden −A.R gönderir. Dengeli giriş (Hot − Cold) ÷ 2 değerini duyar. İkinci kabloda hot ile cold yer değiştirirse ne olur?'
+      },
+      explain: {
+        en: 'Swapping hot and cold on one end of a balanced cable inverts the polarity: C hears (−A.R − A.R) ÷ 2 = −A.R.',
+        tr: 'Dengeli bir kablonun bir ucunda hot ile cold yer değiştirirse polarite ters çevrilir: C, (−A.R − A.R) ÷ 2 = −A.R duyar.'
+      },
+      devices: [
+        { l: 'A', kind: 'src', name: { en: 'Keyboard', tr: 'Klavye' }, out: 'us' },
+        { l: 'B', kind: 'proc', name: { en: 'DI box', tr: 'DI kutusu' }, in: 'um', out: 'bm' },
+        { l: 'C', kind: 'dst', name: { en: 'Mixer channel', tr: 'Mikser kanalı' }, in: 'bm' }
+      ],
+      links: [{ from: 'A', to: 'B' }, { from: 'B', to: 'C' }],
+      target: { dev: 'C', ch: { M: { 'A.R': -1 } } }
+    },
+    {
+      title: { en: 'Mic to mixer', tr: 'Mikrofondan miksere' },
+      text: {
+        en: 'A is a dynamic microphone (balanced mono output). B is a mixer input (balanced mono). Make a standard mic cable: XLR on both ends, 3-way cable, with B getting A.M in phase.',
+        tr: 'A dinamik bir mikrofon (dengeli mono çıkış). B bir mikser girişi (dengeli mono). Standart bir mikrofon kablosu yapın: iki uçta da XLR, 3 iletkenli kablo, ve B cihazına A.M aynı fazda ulaşsın.'
+      },
+      hint: {
+        en: 'AES standard: Pin 1 = shield/ground, Pin 2 = hot, Pin 3 = cold.',
+        tr: 'AES standardı: Pin 1 = shield/toprak, Pin 2 = hot, Pin 3 = cold.'
+      },
+      explain: {
+        en: 'Pin 1 → Shield, Pin 2 → Hot, Pin 3 → Cold on both ends. This is the standard mic cable.',
+        tr: 'İki uçta da Pin 1 → Shield, Pin 2 → Hot, Pin 3 → Cold. Standart mikrofon kablosu budur.'
+      },
+      devices: [
+        { l: 'A', kind: 'src', name: { en: 'Dynamic mic', tr: 'Dinamik mikrofon' }, out: 'bm' },
+        { l: 'B', kind: 'dst', name: { en: 'Mixer', tr: 'Mikser' }, in: 'bm' }
+      ],
+      links: [{ from: 'A', to: 'B', a: 'XLR', b: 'XLR', cable: 3 }],
+      target: { dev: 'B', ch: { M: { 'A.M': 1 } } }
+    },
+    {
+      title: { en: 'Pin 3 hot', tr: 'Pin 3 hot' },
+      text: {
+        en: 'B is an old device whose XLR input is wired pin 3 hot. A is a standard (pin 2 hot) mic. Make an XLR–XLR cable with a 3-way cable so that B gets A.M in phase.',
+        tr: 'B, XLR girişi pin 3 hot olarak bağlanmış eski bir cihaz. A standart (pin 2 hot) bir mikrofon. 3 iletkenli kabloyla XLR–XLR bir kablo yapın; B cihazına A.M aynı fazda ulaşsın.'
+      },
+      hint: {
+        en: 'On B\'s side, pin 3 is hot and pin 2 is cold. Hot has to reach hot.',
+        tr: 'B tarafında pin 3 hot, pin 2 cold. Hot, hot\'a ulaşmalı.'
+      },
+      explain: {
+        en: 'At A: Pin 2 → Hot, Pin 3 → Cold. At B: Pin 3 → Hot, Pin 2 → Cold. A normal cable would have inverted the polarity.',
+        tr: 'A tarafında: Pin 2 → Hot, Pin 3 → Cold. B tarafında: Pin 3 → Hot, Pin 2 → Cold. Normal bir kablo polariteyi ters çevirirdi.'
+      },
+      devices: [
+        { l: 'A', kind: 'src', name: { en: 'Mic', tr: 'Mikrofon' }, out: 'bm' },
+        { l: 'B', kind: 'dst', name: { en: 'Vintage desk', tr: 'Eski konsol' }, in: 'bm', pin3: true }
+      ],
+      links: [{ from: 'A', to: 'B', a: 'XLR', b: 'XLR', cable: 3 }],
+      target: { dev: 'B', ch: { M: { 'A.M': 1 } } }
+    },
+    {
+      title: { en: 'Balanced out → unbalanced in', tr: 'Dengeli çıkış → dengesiz giriş' },
+      text: {
+        en: 'A has a balanced line output. B is a guitar amp with an unbalanced mono input. Use XLR at A and TS at B. B must get A.M in phase.',
+        tr: 'A cihazının dengeli line çıkışı var. B, dengesiz mono girişli bir gitar amfisi. A tarafında XLR, B tarafında TS kullanın. B cihazına A.M aynı fazda ulaşmalı.'
+      },
+      hint: {
+        en: 'The amp only has signal and ground. Hot carries the in-phase signal. What do you do with the cold pin?',
+        tr: 'Amfide sadece sinyal ve toprak var. Aynı fazdaki sinyali hot taşır. Cold pinini ne yaparsınız?'
+      },
+      explain: {
+        en: 'Pin 2 → Hot → Tip, Pin 1 → Shield → Sleeve. Pin 3 can be left open or tied to pin 1. Many balanced outputs tolerate cold being grounded, but check the manual for the specific gear.',
+        tr: 'Pin 2 → Hot → Tip, Pin 1 → Shield → Sleeve. Pin 3 açık bırakılabilir ya da pin 1\'e bağlanabilir. Birçok dengeli çıkış cold\'un topraklanmasını tolere eder, ama o cihazın kılavuzuna bakmak gerekir.'
+      },
+      devices: [
+        { l: 'A', kind: 'src', name: { en: 'Line out', tr: 'Line çıkışı' }, out: 'bm' },
+        { l: 'B', kind: 'dst', name: { en: 'Guitar amp', tr: 'Gitar amfisi' }, in: 'um' }
+      ],
+      links: [{ from: 'A', to: 'B', a: 'XLR', b: 'TS' }],
+      target: { dev: 'B', ch: { M: { 'A.M': 1 } } }
+    },
+    {
+      title: { en: 'Unbalanced → balanced in', tr: 'Dengesiz çıkış → dengeli giriş' },
+      text: {
+        en: 'A is a guitar pedal (unbalanced mono output). B has a balanced mono input. Use TS at A and XLR at B. B must get A.M in phase, with no floating input pins.',
+        tr: 'A bir gitar pedalı (dengesiz mono çıkış). B cihazının dengeli mono girişi var. A tarafında TS, B tarafında XLR kullanın. B cihazına A.M aynı fazda ulaşmalı ve hiçbir giriş pini boşta (floating) kalmamalı.'
+      },
+      hint: {
+        en: 'A balanced input reads both Hot and Cold. If the cold pin is not connected to anything, it floats and picks up noise. Where should it go?',
+        tr: 'Dengeli giriş hem Hot hem Cold pinini okur. Cold pini hiçbir yere bağlı değilse boşta kalır ve gürültü toplar. Nereye bağlanmalı?'
+      },
+      explain: {
+        en: 'Pin 2 gets the signal, and pin 3 is tied to ground (pin 1). The input hears (A.M − 0) ÷ 2, which is 6 dB quieter than a true balanced signal. That is normal.',
+        tr: 'Sinyal pin 2\'ye gider, pin 3 toprağa (pin 1) bağlanır. Giriş (A.M − 0) ÷ 2 duyar; bu, gerçek dengeli sinyalden 6 dB daha düşüktür. Bu normaldir.'
+      },
+      devices: [
+        { l: 'A', kind: 'src', name: { en: 'Pedal', tr: 'Pedal' }, out: 'um' },
+        { l: 'B', kind: 'dst', name: { en: 'Interface input', tr: 'Ses kartı girişi' }, in: 'bm' }
+      ],
+      links: [{ from: 'A', to: 'B', a: 'TS', b: 'XLR' }],
+      target: { dev: 'B', ch: { M: { 'A.M': 1 } } }
+    },
+    {
+      title: { en: 'Mono to both ears', tr: 'Mono sinyal iki kulağa' },
+      text: {
+        en: 'A has an unbalanced mono output. B is a pair of headphones (unbalanced stereo input). With one cable, TS at A and TRS at B, make B hear A.M in both the left and the right ear.',
+        tr: 'A cihazının dengesiz mono çıkışı var. B bir kulaklık (dengesiz stereo giriş). Tek bir kabloyla, A tarafında TS ve B tarafında TRS kullanarak B cihazının hem sol hem sağ kulağına A.M ulaştırın.'
+      },
+      hint: {
+        en: 'One signal has to reach two input contacts. Inputs can share a signal; outputs can\'t.',
+        tr: 'Tek bir sinyalin iki giriş kontağına ulaşması gerekiyor. Girişler bir sinyali paylaşabilir; çıkışlar paylaşamaz.'
+      },
+      explain: {
+        en: 'At B, Tip and Ring both go to the Hot conductor. Feeding one output into two inputs is fine.',
+        tr: 'B tarafında Tip ve Ring ikisi de Hot iletkenine gider. Bir çıkışı iki girişe beslemek sorun değildir.'
+      },
+      devices: [
+        { l: 'A', kind: 'src', name: { en: 'Mono synth', tr: 'Mono synth' }, out: 'um' },
+        { l: 'B', kind: 'dst', name: { en: 'Headphones', tr: 'Kulaklık' }, in: 'us' }
+      ],
+      links: [{ from: 'A', to: 'B', a: 'TS', b: 'TRS' }],
+      target: { dev: 'B', ch: { L: { 'A.M': 1 }, R: { 'A.M': 1 } } }
+    },
+    {
+      title: { en: 'Summing to mono', tr: 'Mono\'ya toplama' },
+      text: {
+        en: 'A has an unbalanced stereo output. C has an unbalanced mono input. Get both A.L and A.R into C, equally and in phase. B is a small mixer with an unbalanced stereo input and an unbalanced mono output.',
+        tr: 'A cihazının dengesiz stereo çıkışı, C cihazının dengesiz mono girişi var. A.L ve A.R sinyallerinin ikisini de eşit miktarda ve aynı fazda C cihazına ulaştırın. B, dengesiz stereo girişi ve dengesiz mono çıkışı olan küçük bir mikser.'
+      },
+      hint: {
+        en: 'Joining L and R on the same wire ties two outputs together, which is a short between outputs. Let the mixer do the summing.',
+        tr: 'L ve R\'yi aynı tele bağlamak iki çıkışı birbirine bağlamak demektir; bu, çıkışlar arası kısa devredir. Toplama işini mikser yapsın.'
+      },
+      explain: {
+        en: 'A → B with a stereo cable, then B\'s mono output → C. The mixer sums (A.L + A.R) ÷ 2 without loading A\'s outputs.',
+        tr: 'A → B stereo kabloyla, sonra B cihazının mono çıkışı → C. Mikser, A cihazının çıkışlarını yüklemeden (A.L + A.R) ÷ 2 toplamını yapar.'
+      },
+      devices: [
+        { l: 'A', kind: 'src', name: { en: 'Phone', tr: 'Telefon' }, out: 'us' },
+        { l: 'B', kind: 'proc', name: { en: 'Mini mixer', tr: 'Mini mikser' }, in: 'us', out: 'um' },
+        { l: 'C', kind: 'dst', name: { en: 'Mono PA', tr: 'Mono PA' }, in: 'um' }
+      ],
+      links: [{ from: 'A', to: 'B' }, { from: 'B', to: 'C' }],
+      target: { dev: 'C', ch: { M: { 'A.L': 1, 'A.R': 1 } } }
+    }
+  ];
+
+  // ---------- signal vectors ----------
+  const EPS = 1e-9;
+  const vclean = v => { const r = {}; for (const k in v) if (Math.abs(v[k]) > EPS) r[k] = v[k]; return r; };
+  const vadd = (a, b) => { const r = { ...a }; for (const k in b) r[k] = (r[k] || 0) + b[k]; return vclean(r); };
+  const vscale = (a, s) => { const r = {}; for (const k in a) r[k] = a[k] * s; return vclean(r); };
+  const vsub = (a, b) => vadd(a, vscale(b, -1));
+  const num = x => String(Math.round(x * 1000) / 1000);
+  function vfmt(v) {
+    if (!v) return t('noSignal');
+    const ks = Object.keys(v).sort();
+    if (!ks.length) return t('silence');
+    let s = '';
+    ks.forEach((k, i) => {
+      const c = v[k], a = Math.abs(c);
+      const mag = Math.abs(a - 1) < 1e-6 ? '' : num(a) + '·';
+      s += i === 0 ? (c < 0 ? '−' : '') + mag + k : (c < 0 ? ' − ' : ' + ') + mag + k;
+    });
+    return s;
+  }
+  function vdb(v) {
+    const ks = Object.keys(v || {});
+    if (ks.length !== 1) return null;
+    const db = 20 * Math.log10(Math.abs(v[ks[0]]));
+    return Math.abs(db) < 0.05 ? null : (db > 0 ? '+' : '−') + Math.abs(db).toFixed(1) + ' dB';
+  }
+  function proportional(got, want) {
+    const keys = new Set([...Object.keys(got), ...Object.keys(want)]);
+    const k0 = Object.keys(want)[0];
+    if (!(k0 in got)) return false;
+    const ratio = got[k0] / want[k0];
+    if (!(ratio > 0)) return false;
+    for (const k of keys) if (Math.abs((got[k] || 0) - ratio * (want[k] || 0)) > 1e-6) return false;
+    return true;
+  }
+
+  // ---------- helpers ----------
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  function makeUF() {
+    const p = {};
+    const find = x => { while (p[x] !== x) { p[x] = p[p[x]]; x = p[x]; } return x; };
+    return {
+      add: x => { if (!(x in p)) p[x] = x; },
+      find,
+      union: (a, b) => { if (!(a in p) || !(b in p)) return; const ra = find(a), rb = find(b); if (ra !== rb) p[ra] = rb; }
+    };
+  }
+
+  // How a plug's pins mate with a device jack, following the standard pinouts.
+  function mating(pt, plug, pin3hot) {
+    const cs = PORTS[pt].contacts, c1 = cs[0], c2 = cs.length === 3 ? cs[1] : null;
+    const m = [];
+    if (plug === 'TS') {
+      m.push({ c: c1, p: 'T' }, { c: 'G', p: 'S' });
+      if (c2) m.push({ c: c2, p: 'S', note: () => t('noteTs', cName(c2)) });
+    } else if (plug === 'TRS') {
+      m.push({ c: c1, p: 'T' }, { c: 'G', p: 'S' });
+      if (c2) m.push({ c: c2, p: 'R' });
+      else m.push({ c: 'G', p: 'R', note: () => t('noteTrs') });
+    } else {
+      m.push({ c: 'G', p: '1' });
+      if (pt === 'bm' && pin3hot) m.push({ c: '+', p: '3' }, { c: '-', p: '2' });
+      else { m.push({ c: c1, p: '2' }); if (c2) m.push({ c: c2, p: '3' }); }
+    }
+    return m;
+  }
+
+  // ---------- state ----------
+  const STORE_KEY = 'pmy-signal-flow-lab-v1';
+  const S = {
+    mode: 'sandbox', q: 0, devices: [], cables: [], uid: 1,
+    sel: null, pending: null, hint: false, reveal: false, result: null, msg: ''
+  };
+  let sandbox = null;
+
+  const dev = id => S.devices.find(d => d.id === id);
+  const devByLetter = l => S.devices.find(d => d.letter === l);
+  const cableFromOut = d => S.cables.find(c => c.from === d.id);
+  const cableToIn = d => S.cables.find(c => c.to === d.id);
+  // a device name is either text the user typed or an {en, tr} default
+  const dn = d => tx(d.name);
+  // S.msg is stored as a function so it follows language changes
+  const msg = (key, ...args) => { S.msg = () => t(key, ...args); };
+
+  function nextLetter() {
+    for (let i = 0; i < 26; i++) { const l = String.fromCharCode(65 + i); if (!devByLetter(l)) return l; }
+    return '?';
+  }
+  const DEFAULT_NAMES = {
+    src: { en: 'Source', tr: 'Kaynak' }, proc: { en: 'Processor', tr: 'İşlemci' }, dst: { en: 'Destination', tr: 'Hedef' }
+  };
+  function newDevice(kind, o = {}) {
+    return {
+      id: 'd' + (S.uid++), kind,
+      letter: o.l || nextLetter(),
+      name: o.name || DEFAULT_NAMES[kind],
+      in: kind === 'src' ? null : (o.in || (kind === 'proc' ? 'um' : 'us')),
+      out: kind === 'dst' ? null : (o.out || (kind === 'proc' ? 'bm' : 'us')),
+      pin3: !!o.pin3, locked: !!o.locked, x: o.x || 0, y: o.y || 0
+    };
+  }
+  function defaultSandbox() {
+    S.devices = []; S.cables = [];
+    S.devices.push(newDevice('src', { name: { en: 'Synth', tr: 'Synth' }, out: 'us', x: 30, y: 40 }));
+    S.devices.push(newDevice('dst', { name: { en: 'Headphone amp', tr: 'Kulaklık amfisi' }, in: 'us', x: 420, y: 40 }));
+  }
+  function saveSandbox() {
+    if (S.mode !== 'sandbox') return;
+    try { localStorage.setItem(STORE_KEY, JSON.stringify({ devices: S.devices, cables: S.cables, uid: S.uid })); } catch (e) { /* storage unavailable */ }
+  }
+  function loadSandbox() {
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      if (raw) {
+        const o = JSON.parse(raw);
+        if (Array.isArray(o.devices) && Array.isArray(o.cables)) { S.devices = o.devices; S.cables = o.cables; S.uid = o.uid || 100; return; }
+      }
+    } catch (e) { /* ignore */ }
+    defaultSandbox();
+  }
+  function loadQuestion(i) {
+    const q = QUESTIONS[i];
+    S.q = i; S.cables = []; S.sel = null; S.pending = null; S.hint = false; S.reveal = false; S.result = null;
+    S.devices = q.devices.map((d, k) => newDevice(d.kind, { ...d, locked: true, x: 30 + k * 280, y: 40 + (k % 2) * 30 }));
+    msg('startQ', q.devices[0].l);
+  }
+
+  // ---------- simulation ----------
+  function nodeName(n, src, dst) {
+    if (n.startsWith('w:')) return t('condName', COND[n.slice(2)].name);
+    const [e, ty, id] = n.split(':');
+    const d = e === 'a' ? src : dst;
+    if (ty === 'c') return t('contactOf', d.letter, cName(id));
+    return t('pinAt', PIN_NAME[id], d ? d.letter : null);
+  }
+
+  function solveLink(cab, src, dst, outVec) {
+    const uf = makeUF(), nodes = [];
+    const add = n => { uf.add(n); nodes.push(n); };
+    const sp = src.out, dp = dst ? dst.in : null;
+    PORTS[sp].contacts.forEach(c => add('a:c:' + c));
+    PLUGS[cab.conn.a].forEach(p => add('a:p:' + p));
+    condsOf(cab).forEach(c => add('w:' + c));
+    PLUGS[cab.conn.b].forEach(p => add('b:p:' + p));
+    if (dst) PORTS[dp].contacts.forEach(c => add('b:c:' + c));
+
+    const mates = { a: mating(sp, cab.conn.a, src.pin3), b: dst ? mating(dp, cab.conn.b, dst.pin3) : [] };
+    mates.a.forEach(m => uf.union('a:c:' + m.c, 'a:p:' + m.p));
+    mates.b.forEach(m => uf.union('b:c:' + m.c, 'b:p:' + m.p));
+    cab.wires.forEach(([e, p, c]) => uf.union(e + ':p:' + p, 'w:' + c));
+
+    const groups = {};
+    nodes.forEach(n => {
+      const r = uf.find(n);
+      (groups[r] || (groups[r] = { nodes: [], drivers: [], srcG: false, dstG: false })).nodes.push(n);
+    });
+    PORTS[sp].contacts.forEach(c => {
+      const g = groups[uf.find('a:c:' + c)];
+      if (c === 'G') g.srcG = true;
+      else g.drivers.push({ c, vec: (outVec && outVec[c]) || {}, bal: sp === 'bm' });
+    });
+    if (dst) groups[uf.find('b:c:G')].dstG = true;
+
+    const issues = [];
+    const nm = n => nodeName(n, src, dst);
+    ['a', 'b'].forEach(e => mates[e].filter(m => m.note).forEach(m => {
+      const d = e === 'a' ? src : dst;
+      issues.push({ sev: 'info', msg: t('plugNote', cab.conn[e], d.letter, m.note()) });
+    }));
+
+    const val = {};
+    for (const r in groups) {
+      const g = groups[r];
+      let v;
+      if (g.srcG && g.drivers.length) {
+        v = { k: 'short', v: {} };
+        const via = g.nodes.filter(n => !n.startsWith('a:c:')).map(nm);
+        const viaTxt = via.length ? t('via', via.join(', ')) : t('viaJack');
+        g.drivers.forEach(d => {
+          const who = t('outputOf', src.letter, cName(d.c));
+          issues.push(d.bal ? { sev: 'warn', msg: t('balShort', who, viaTxt) } : { sev: 'fault', msg: t('unbShort', who, viaTxt) });
+        });
+      } else if (g.srcG) v = { k: 'gnd', v: {} };
+      else if (g.drivers.length > 1) {
+        let s = {};
+        g.drivers.forEach(d => { s = vadd(s, d.vec); });
+        v = { k: 'clash', v: vscale(s, 1 / g.drivers.length) };
+        issues.push({ sev: 'fault', msg: t('clash', src.letter, g.drivers.map(d => PORTS[sp].short[d.c]).join(t('and'))) });
+      } else if (g.drivers.length === 1) v = { k: 'sig', v: g.drivers[0].vec };
+      else if (g.dstG) v = { k: 'dgnd', v: null };
+      else v = { k: 'open', v: null };
+      g.val = v;
+      g.nodes.forEach(n => { val[n] = v; });
+    }
+
+    let channels = null;
+    if (dst) {
+      channels = {};
+      const rG = uf.find('b:c:G'), gG = groups[rG], vG = gG.val.v;
+      const linked = gG.srcG;
+      const bal = dp === 'bm';
+      if (!linked) {
+        if (gG.drivers.length) issues.push({ sev: 'fault', msg: t('gndToSig', dst.letter, src.letter) });
+        else if (bal) issues.push({ sev: 'warn', msg: t('noShield', src.letter, dst.letter) });
+        else issues.push({ sev: 'fault', msg: t('noGround', src.letter, dst.letter) });
+      }
+      const floatMsg = (c, r) => groups[r].dstG
+        ? t('floatLocal', dst.letter, cName(c), src.letter)
+        : t('floating', dst.letter, cName(c));
+      if (bal) {
+        const rp = uf.find('b:c:+'), rm = uf.find('b:c:-');
+        if (rp === rm) {
+          channels.M = {};
+          issues.push({ sev: 'warn', msg: t('hotColdJoined', dst.letter) });
+        } else {
+          const vp = groups[rp].val.v, vm = groups[rm].val.v;
+          if (vp == null) issues.push({ sev: 'fault', msg: floatMsg('+', rp) });
+          if (vm == null) issues.push({ sev: 'fault', msg: floatMsg('-', rm) });
+          channels.M = (vp == null || vm == null) ? null : vscale(vsub(vp, vm), 0.5);
+        }
+      } else {
+        const chans = dp === 'us' ? [['L', 'L'], ['R', 'R']] : [['M', 'S']];
+        chans.forEach(([ch, c]) => {
+          const r = uf.find('b:c:' + c);
+          if (r === rG) { channels[ch] = {}; return; }
+          const v = groups[r].val.v;
+          if (v == null) { issues.push({ sev: 'fault', msg: floatMsg(c, r) }); channels[ch] = null; return; }
+          channels[ch] = linked ? vsub(v, vG || {}) : null;
+        });
+      }
+    }
+    return { val, issues, channels, mates };
+  }
+
+  function deviceOut(d, inCh) {
+    if (d.kind === 'src') {
+      const L = d.letter;
+      if (d.out === 'us') return { L: { [L + '.L']: 1 }, R: { [L + '.R']: 1 } };
+      if (d.out === 'um') return { S: { [L + '.M']: 1 } };
+      return { '+': { [L + '.M']: 1 }, '-': { [L + '.M']: -1 } };
+    }
+    const ch = inCh || {};
+    let mono = {}, l = {}, r = {};
+    if ('M' in ch) { mono = ch.M || {}; l = r = mono; }
+    else if ('L' in ch) { l = ch.L || {}; r = ch.R || {}; mono = vscale(vadd(l, r), 0.5); }
+    if (d.out === 'um') return { S: mono };
+    if (d.out === 'bm') return { '+': mono, '-': vscale(mono, -1) };
+    return { L: l, R: r };
+  }
+
+  function inCycle(cab) {
+    // is cab.from reachable from cab.to?
+    const seen = new Set();
+    let cur = cab.to;
+    while (cur && !seen.has(cur)) {
+      if (cur === cab.from) return true;
+      seen.add(cur);
+      const next = S.cables.find(c => c.from === cur);
+      cur = next ? next.to : null;
+    }
+    return false;
+  }
+
+  function simulate() {
+    const res = { links: {}, inCh: {}, outVec: {} };
+    const passes = S.devices.length + 1;
+    for (let p = 0; p < passes; p++) {
+      S.devices.forEach(d => { if (d.out) res.outVec[d.id] = deviceOut(d, res.inCh[d.id]); });
+      S.cables.forEach(c => {
+        const src = dev(c.from), dst = c.to ? dev(c.to) : null;
+        const r = solveLink(c, src, dst, res.outVec[src.id]);
+        res.links[c.id] = r;
+        if (dst) res.inCh[dst.id] = r.channels;
+      });
+    }
+    S.cables.forEach(c => {
+      if (c.to && inCycle(c)) res.links[c.id].issues.push({ sev: 'fault', msg: t('loop') });
+    });
+    return res;
+  }
+
+  // ---------- grading ----------
+  function check() {
+    const q = QUESTIONS[S.q], sim = simulate();
+    const fails = [], notes = [];
+    q.links.forEach(L => {
+      const a = devByLetter(L.from), b = devByLetter(L.to);
+      const cab = S.cables.find(c => c.from === a.id && c.to === b.id);
+      if (!cab) { fails.push(t('noCable', L.from, L.to)); return; }
+      const where = t('where', cab.conn.a, L.from, cab.conn.b, L.to);
+      if (L.plugs) {
+        const got = [cab.conn.a, cab.conn.b].sort().join(), want = [...L.plugs].sort().join();
+        if (got !== want) fails.push(t('needPlugs', L.from, L.to, L.plugs[0], L.plugs[1], where));
+      }
+      if (L.a && cab.conn.a !== L.a) fails.push(t('needAt', L.from, L.to, L.a, L.from, where));
+      if (L.b && cab.conn.b !== L.b) fails.push(t('needAt', L.from, L.to, L.b, L.to, where));
+      if (L.cable && cab.type !== L.cable) fails.push(t('needType', L.from, L.to, L.cable));
+    });
+    S.cables.forEach(c => sim.links[c.id].issues.filter(i => i.sev === 'fault').forEach(i => fails.push(i.msg)));
+    const tg = devByLetter(q.target.dev), ch = sim.inCh[tg.id];
+    for (const k in q.target.ch) {
+      const want = q.target.ch[k], got = ch ? ch[k] : undefined, chn = t('ch_' + k);
+      if (got == null) fails.push(t('chNone', tg.letter, chn, vfmt(want)));
+      else if (!proportional(got, want)) fails.push(t('chWrong', tg.letter, chn, vfmt(got), vfmt(want), Object.keys(want).length > 1));
+      else { const db = vdb(got); if (db) notes.push(t('chLevel', tg.letter, chn, db)); }
+    }
+    S.cables.forEach(c => sim.links[c.id].issues.filter(i => i.sev === 'warn').forEach(i => notes.push(t('warnPrefix') + i.msg)));
+    S.result = { ok: fails.length === 0, fails: [...new Set(fails)], notes };
+  }
+
+  // ---------- mutations ----------
+  function mutate(fn) { fn(); S.result = null; render(); }
+
+  function addDevice(kind) {
+    if (S.mode !== 'sandbox') return;
+    if (S.devices.length >= 26) return;
+    mutate(() => {
+      const col = { src: 30, proc: 300, dst: 570 }[kind];
+      const same = S.devices.filter(d => d.kind === kind).length;
+      const d = newDevice(kind, { x: col, y: 30 + (same % 4) * 120 + Math.floor(same / 4) * 20 });
+      S.devices.push(d);
+      S.sel = { t: 'dev', id: d.id };
+    });
+  }
+  function deleteDevice(id) {
+    mutate(() => {
+      S.devices = S.devices.filter(d => d.id !== id);
+      S.cables = S.cables.filter(c => c.from !== id && c.to !== id);
+      S.sel = null;
+    });
+  }
+  function clickOutPort(d) {
+    const ex = cableFromOut(d);
+    if (ex) { S.sel = { t: 'cab', id: ex.id }; S.pending = null; S.msg = ''; render(); return; }
+    mutate(() => {
+      const c = { id: 'c' + (S.uid++), from: d.id, to: null, conn: { a: 'TRS', b: 'TRS' }, type: 3, wires: [] };
+      S.cables.push(c);
+      S.sel = { t: 'cab', id: c.id }; S.pending = null;
+      msg('newCable', d.letter);
+    });
+  }
+  function clickInPort(d) {
+    const ex = cableToIn(d);
+    const selCab = S.sel && S.sel.t === 'cab' ? S.cables.find(c => c.id === S.sel.id) : null;
+    if (selCab && !selCab.to && !ex) {
+      if (selCab.from === d.id) { msg('selfConnect'); render(); return; }
+      mutate(() => { selCab.to = d.id; msg('plugged', dev(selCab.from).letter, d.letter); });
+      return;
+    }
+    if (ex) { S.sel = { t: 'cab', id: ex.id }; S.pending = null; S.msg = ''; render(); return; }
+    msg('needOut');
+    render();
+  }
+  function toggleWire(cab, end, pin, cond) {
+    mutate(() => {
+      const i = cab.wires.findIndex(w => w[0] === end && w[1] === pin && w[2] === cond);
+      if (i >= 0) cab.wires.splice(i, 1); else cab.wires.push([end, pin, cond]);
+    });
+  }
+  function clickNode(cab, type, end, id) {
+    const p = S.pending;
+    if (p && p.end === end && p.type !== type) {
+      const pin = type === 'pin' ? id : p.id, cond = type === 'cond' ? id : p.id;
+      S.pending = null;
+      toggleWire(cab, end, pin, cond);
+      return;
+    }
+    S.pending = (p && p.end === end && p.type === type && p.id === id) ? null : { type, end, id };
+    render();
+  }
+
+  // ---------- rendering ----------
+  function statusOf(d, sim) {
+    if (d.kind === 'src') {
+      const o = sim.outVec[d.id] || {};
+      return { txt: t('stOut') + Object.keys(o).map(k => vfmt(o[k])).join(' | '), bad: false };
+    }
+    const ch = sim.inCh[d.id];
+    const pre = d.kind === 'dst' ? t('stHears') : t('stIn');
+    let txt;
+    if (!ch) txt = t('stNone');
+    else if ('M' in ch) txt = pre + vfmt(ch.M);
+    else txt = pre + 'L: ' + vfmt(ch.L) + ' · R: ' + vfmt(ch.R);
+    const bad = !!ch && Object.values(ch).some(v => v == null);
+    return { txt, bad };
+  }
+  function linkBad(sim, c) { return sim.links[c.id].issues.some(i => i.sev === 'fault'); }
+
+  function portPos(d, side) { return side === 'out' ? [d.x + CARD_W, d.y + PORT_Y] : [d.x, d.y + PORT_Y]; }
+  function cablePathD(c) {
+    const a = dev(c.from);
+    const [x1, y1] = portPos(a, 'out');
+    let x2, y2;
+    if (c.to) [x2, y2] = portPos(dev(c.to), 'in');
+    else { x2 = x1 + 70; y2 = y1 + 50; }
+    const dx = Math.max(50, Math.abs(x2 - x1) / 2);
+    return { d: `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`, mx: (x1 + x2) / 2, my: (y1 + y2) / 2, x2, y2 };
+  }
+
+  function rackSize() {
+    // content size only; the inner area stays at 100% unless devices need more room
+    let w = 0, h = 0;
+    S.devices.forEach(d => { w = Math.max(w, d.x + CARD_W + 120); h = Math.max(h, d.y + 170); });
+    return [w, h];
+  }
+
+  function renderRack(sim) {
+    const inner = $('#rackInner'), rack = $('#rack');
+    const [needW, needH] = rackSize();
+    inner.style.width = needW > rack.clientWidth ? needW + 'px' : '100%';
+    inner.style.height = needH > rack.clientHeight ? needH + 'px' : '100%';
+    const W = Math.max(needW, rack.clientWidth), H = Math.max(needH, rack.clientHeight);
+    const selCab = S.sel && S.sel.t === 'cab' ? S.cables.find(c => c.id === S.sel.id) : null;
+    const waiting = selCab && !selCab.to;
+    let svg = `<svg class="wires" width="${W}" height="${H}">`;
+    S.cables.forEach(c => {
+      const p = cablePathD(c);
+      const cls = 'cab' + (selCab === c ? ' sel' : '') + (linkBad(sim, c) ? ' bad' : '');
+      svg += `<path id="cp-${c.id}" class="${cls}" d="${p.d}"/>`;
+      svg += `<path id="ch-${c.id}" class="cab-hit" data-cable="${c.id}" d="${p.d}"/>`;
+      if (!c.to) svg += `<circle id="ce-${c.id}" class="cab-end" cx="${p.x2}" cy="${p.y2}" r="5"/>`;
+      svg += `<text id="cl-${c.id}" class="cab-label" x="${p.mx}" y="${p.my - 8}" text-anchor="middle">${c.conn.a}–${c.conn.b}</text>`;
+    });
+    svg += '</svg>';
+    let cards = '';
+    S.devices.forEach(d => {
+      const st = statusOf(d, sim);
+      const bad = S.cables.some(c => (c.from === d.id || c.to === d.id) && linkBad(sim, c));
+      const sel = S.sel && S.sel.t === 'dev' && S.sel.id === d.id;
+      const ports = [];
+      if (d.in) ports.push(`<div>${t('inLbl')}: ${portLabel(d.in)}${d.in === 'bm' && d.pin3 ? t('pin3') : ''}</div>`);
+      if (d.out) ports.push(`<div>${t('outLbl')}: ${portLabel(d.out)}${d.out === 'bm' && d.pin3 ? t('pin3') : ''}</div>`);
+      cards += `<div class="card${sel ? ' sel' : ''}${bad ? ' bad' : ''}" data-dev="${d.id}" style="left:${d.x}px;top:${d.y}px">
+        <div class="kind">${t('kind_' + d.kind)}</div>
+        <div class="ttl"><span class="lt">${d.letter}</span>${esc(dn(d))}</div>
+        <div class="ports">${ports.join('')}</div>
+        <div class="stat${st.bad ? ' bad' : ''}">${esc(st.txt)}</div>
+        ${d.in ? `<button class="port in${cableToIn(d) ? ' used' : ''}${waiting && !cableToIn(d) && selCab.from !== d.id ? ' target' : ''}" data-port="in" data-dev="${d.id}" title="${esc(t('portTitle', d.letter, 'in', portLabel(d.in)))}" aria-label="${esc(t('portTitle', d.letter, 'in', portLabel(d.in)))}"></button>` : ''}
+        ${d.out ? `<button class="port out${cableFromOut(d) ? ' used' : ''}" data-port="out" data-dev="${d.id}" title="${esc(t('portTitle', d.letter, 'out', portLabel(d.out)))}" aria-label="${esc(t('portTitle', d.letter, 'out', portLabel(d.out)))}"></button>` : ''}
+      </div>`;
+    });
+    inner.innerHTML = svg + cards;
+    $('#rackMsg').innerHTML = (typeof S.msg === 'function' ? S.msg() : S.msg) || (S.devices.length ? t('rackHelp') : t('rackEmpty'));
+  }
+
+  function updateWiresFor(d) {
+    S.cables.filter(c => c.from === d.id || c.to === d.id).forEach(c => {
+      const p = cablePathD(c);
+      const a = document.getElementById('cp-' + c.id), b = document.getElementById('ch-' + c.id), l = document.getElementById('cl-' + c.id), e = document.getElementById('ce-' + c.id);
+      if (a) a.setAttribute('d', p.d);
+      if (b) b.setAttribute('d', p.d);
+      if (l) { l.setAttribute('x', p.mx); l.setAttribute('y', p.my - 8); }
+      if (e) { e.setAttribute('cx', p.x2); e.setAttribute('cy', p.y2); }
+    });
+  }
+
+  function valText(v, dst) {
+    switch (v.k) {
+      case 'sig': return [vfmt(v.v), 'val-sig'];
+      case 'gnd': return [t('vGnd'), 'val-gnd'];
+      case 'short': return [t('vShort'), 'val-bad'];
+      case 'clash': return [t('vClash'), 'val-bad'];
+      case 'dgnd': return [t('vDgnd', dst ? dst.letter : ''), 'val-bad'];
+      default: return [t('vOpen'), 'val-open'];
+    }
+  }
+
+  function diagram(cab, src, dst, lr, reveal) {
+    const W = 820, H = 262, Y = r => 70 + r * 75;
+    const X = { ac: 112, ap: 250, wl: 360, wr: 460, bp: 570, bc: 708 };
+    const pend = S.pending;
+    let lines = '', nodes = '', texts = '';
+    const vt = (n, x, y, anchor) => {
+      const v = lr.val[n];
+      if (!v || !reveal) return '';
+      const [tt, cls] = valText(v, dst);
+      return `<text class="vlabel ${cls}" x="${x}" y="${y}" text-anchor="${anchor}">${esc(tt)}</text>`;
+    };
+
+    // frames
+    let frames = '';
+    if (reveal) {
+    frames += `<rect class="dbox" x="10" y="14" width="124" height="${H - 24}" rx="8"/>`;
+    frames += `<text class="dtitle" x="72" y="34">${esc(t('dOut', src.letter))}</text><text class="dsub" x="72" y="48">${esc(portLabel(src.out))}</text>`;
+    frames += `<rect class="dbox" x="${W - 134}" y="14" width="124" height="${H - 24}" rx="8"/>`;
+    if (dst) frames += `<text class="dtitle" x="${W - 72}" y="34">${esc(t('dIn', dst.letter))}</text><text class="dsub" x="${W - 72}" y="48">${esc(portLabel(dst.in))}</text>`;
+    else frames += `<text class="dsub" x="${W - 72}" y="${H / 2}">${esc(t('notPluggedShort'))}</text>`;
+    }
+    [['a', X.ap], ['b', X.bp]].forEach(([e, x]) => {
+      frames += `<rect class="pbox" x="${x - 34}" y="14" width="68" height="${H - 24}" rx="10"/>`;
+      frames += `<text class="dtitle" x="${x}" y="34" style="fill:#ddd">${cab.conn[e]}</text>`;
+    });
+    frames += `<rect class="jacket" x="${X.wl - 18}" y="22" width="${X.wr - X.wl + 36}" height="${H - 40}" rx="14"/>`;
+    frames += `<text class="dsub" x="${(X.wl + X.wr) / 2}" y="40">${esc(t('nWayCable', cab.type))}</text>`;
+
+    // conductors
+    condsOf(cab).forEach(c => {
+      const y = Y(COND[c].row);
+      lines += `<line x1="${X.wl}" y1="${y}" x2="${X.wr}" y2="${y}" stroke="${COND[c].color}" stroke-width="5" stroke-linecap="round"/>`;
+      texts += `<text class="nlabel" x="${(X.wl + X.wr) / 2}" y="${y - 10}" text-anchor="middle" style="fill:${COND[c].color}">${COND[c].name}</text>`;
+      texts += vt('w:' + c, (X.wl + X.wr) / 2, y + 20, 'middle');
+      [['a', X.wl], ['b', X.wr]].forEach(([e, x]) => {
+        const isP = pend && pend.type === 'cond' && pend.end === e && pend.id === c;
+        const endName = e === 'a' ? src.letter : (dst ? dst.letter : t('far'));
+        nodes += `<circle class="node${isP ? ' pending' : ''}" style="stroke:${COND[c].color}" cx="${x}" cy="${y}" r="9" data-cond="${e}|${c}"><title>${esc(t('condEnd', COND[c].name, endName))}</title></circle>`;
+      });
+    });
+
+    // device contacts and plug pins
+    const sides = [['a', src, src.out, X.ac, X.ap, -1], ['b', dst, dst ? dst.in : null, X.bc, X.bp, 1]];
+    sides.forEach(([e, d, pt, xc, xp, dir]) => {
+      if (d && reveal) {
+        PORTS[pt].contacts.forEach(c => {
+          const y = Y(CONTACT_ROW[c]);
+          nodes += `<circle class="contact" cx="${xc}" cy="${y}" r="7"/>`;
+          const tx2 = xc + dir * 14, anchor = dir < 0 ? 'end' : 'start';
+          texts += `<text class="nlabel" x="${tx2}" y="${y + 4}" text-anchor="${anchor}">${PORTS[pt].short[c]}</text>`;
+          texts += vt(e + ':c:' + c, tx2, y + 20, anchor);
+        });
+        lr.mates[e].forEach(m => {
+          const yc = Y(CONTACT_ROW[m.c]), yp = Y(PIN_ROW[m.p]);
+          lines += `<line class="mate${m.note ? ' note' : ''}" x1="${xc}" y1="${yc}" x2="${xp}" y2="${yp}"><title>${esc(m.note ? m.note() : t('mateTitle'))}</title></line>`;
+        });
+        if (pt === 'um' && cab.conn[e] === 'XLR') texts += `<text class="nc" x="${(xc + xp) / 2}" y="${Y(1) + 4}">${esc(t('pin3nc'))}</text>`;
+      }
+      PLUGS[cab.conn[e]].forEach(p => {
+        const y = Y(PIN_ROW[p]);
+        const isP = pend && pend.type === 'pin' && pend.end === e && pend.id === p;
+        nodes += `<circle class="node pin${isP ? ' pending' : ''}" cx="${xp}" cy="${y}" r="9" data-pin="${e}|${p}"><title>${PIN_NAME[p]}</title></circle>`;
+        texts += `<text class="nlabel" x="${xp}" y="${y - 14}" text-anchor="middle">${PIN_NAME[p]}</text>`;
+        texts += vt(e + ':p:' + p, xp, y + 24, 'middle');
+      });
+    });
+
+    // soldered wires
+    let wires = '';
+    cab.wires.forEach((w, i) => {
+      const [e, p, c] = w;
+      const xp = e === 'a' ? X.ap : X.bp, xw = e === 'a' ? X.wl : X.wr;
+      const y1 = Y(PIN_ROW[p]), y2 = Y(COND[c].row);
+      const mx = (xp + xw) / 2;
+      const d = `M ${xp} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${xw} ${y2}`;
+      wires += `<path class="wire-hit" d="${d}" data-wire="${i}"><title>${esc(t('removeWire'))}${PIN_NAME[p]} → ${COND[c].name}</title></path><path class="wire" d="${d}" stroke="${COND[c].color}"/>`;
+    });
+
+    const vb = reveal ? `0 0 ${W} ${H}` : `${X.ap - 50} 0 ${X.bp - X.ap + 100} ${H}`;
+    return `<svg class="diagram${reveal ? '' : ' compact'}" viewBox="${vb}" role="img" aria-label="${esc(t('diagramLabel'))}">${frames}${lines}${wires}${nodes}${texts}</svg>`;
+  }
+
+  function segHTML(attr, value, opts, disabled) {
+    return `<div class="seg">${opts.map(([v, l]) => `<button data-${attr}="${v}" class="${String(v) === String(value) ? 'on' : ''}"${disabled ? ' disabled' : ''}>${l}</button>`).join('')}</div>`;
+  }
+
+  function renderInspector(sim) {
+    const el = $('#inspector');
+    const sel = S.sel;
+    if (sel && sel.t === 'cab') {
+      const cab = S.cables.find(c => c.id === sel.id);
+      if (cab) { el.innerHTML = cableEditor(cab, sim); return; }
+    }
+    if (sel && sel.t === 'dev') {
+      const d = dev(sel.id);
+      if (d) { el.innerHTML = deviceEditor(d, sim); return; }
+    }
+    el.innerHTML = `<h2>${t('inspector')}</h2><p class="muted">${t('selectSomething')}</p><p class="small muted">${t('inspHelp')}</p>`;
+  }
+
+  function deviceEditor(d, sim) {
+    const locked = d.locked;
+    const opt = (sel) => Object.keys(PORTS).map(k => `<option value="${k}"${k === sel ? ' selected' : ''}>${portLabel(k)}</option>`).join('');
+    const hasBal = d.in === 'bm' || d.out === 'bm';
+    let h = `<h2>${t('kind_' + d.kind)} ${d.letter}</h2>`;
+    h += `<div class="row"><label for="devName">${t('name')}</label><input type="text" id="devName" value="${esc(dn(d))}" maxlength="24"></div>`;
+    if (d.in) h += `<div class="row"><label for="devIn">${t('input')}</label><select id="devIn"${locked ? ' disabled' : ''}>${opt(d.in)}</select></div>`;
+    if (d.out) h += `<div class="row"><label for="devOut">${t('output')}</label><select id="devOut"${locked ? ' disabled' : ''}>${opt(d.out)}</select></div>`;
+    if (hasBal) h += `<div class="row"><label for="devPin3">${t('xlrWiring')}</label><label class="small" style="min-width:0;color:var(--text)"><input type="checkbox" id="devPin3"${d.pin3 ? ' checked' : ''}${locked ? ' disabled' : ''}> ${t('pin3Label')}</label></div>`;
+    if (d.kind === 'src') {
+      const o = sim.outVec[d.id] || {};
+      h += `<p class="small muted">${t('sends')}${Object.keys(o).map(k => `${PORTS[d.out].short[k]} = <b style="color:var(--accent)">${vfmt(o[k])}</b>`).join(', ')}</p>`;
+    } else if (d.kind === 'proc') {
+      const desc = d.in === 'us' && d.out !== 'us' ? t('procSum') : d.in !== 'us' && d.out === 'us' ? t('procDup') : t('procPass');
+      h += `<p class="small muted">${desc}${d.out === 'bm' ? t('procBal') : ''}</p>`;
+    }
+    if (locked) h += `<p class="small muted">${t('locked')}</p>`;
+    else h += `<div class="row"><button class="btn danger" data-act="delDev">${t('delDev')}</button></div>`;
+    return h;
+  }
+
+  function cableEditor(cab, sim) {
+    const src = dev(cab.from), dst = cab.to ? dev(cab.to) : null;
+    const lr = sim.links[cab.id];
+    const targets = S.devices.filter(d => d.in && d.id !== src.id && (!cableToIn(d) || cableToIn(d) === cab));
+    const plugOpts = [['TS', 'TS'], ['TRS', 'TRS'], ['XLR', 'XLR']];
+    let h = `<h2>${t('cableTitle', src.letter, dst ? dst.letter : '?')}</h2>`;
+    h += `<div class="row"><label>${t('from')}</label><span>${t('fromText', src.letter, esc(dn(src)), portLabel(src.out))}</span></div>`;
+    h += `<div class="row"><label for="cabTo">${t('to')}</label><select id="cabTo"><option value="">${t('notPlugged')}</option>${targets.map(d => `<option value="${d.id}"${d.id === cab.to ? ' selected' : ''}>${esc(t('targetOpt', d.letter, dn(d), portLabel(d.in)))}</option>`).join('')}</select></div>`;
+    h += `<div class="cfg">
+      <div><span class="lbl">${t('connAt', src.letter)}</span>${segHTML('conn-a', cab.conn.a, plugOpts)}</div>
+      <div><span class="lbl">${t('cable')}</span>${segHTML('ctype', cab.type, [[2, t('way', 2)], [3, t('way', 3)]])}</div>
+      <div><span class="lbl">${t('connAt', dst ? dst.letter : null)}</span>${segHTML('conn-b', cab.conn.b, plugOpts)}</div>
+    </div>`;
+    h += `<div class="diagram-wrap">${diagram(cab, src, dst, lr, S.reveal)}</div>`;
+    const p = S.pending;
+    h += `<p class="small muted" style="margin:6px 0">${p
+      ? t('pendingTip', p.type === 'pin' ? PIN_NAME[p.id] : t('condName', COND[p.id].name), p.type === 'cond')
+      : t('wireTip') + (S.reveal ? ' ' + t('jackTip') : '')}</p>`;
+    h += `<div class="row"><button class="btn" data-act="toggleJack" title="${esc(t('jackHintTitle'))}">${S.reveal ? t('hideJack') : t('showJack')}</button><button class="btn" data-act="clearWires"${cab.wires.length ? '' : ' disabled'}>${t('clearWires')}</button><button class="btn danger" data-act="delCab">${t('delCab')}</button></div>`;
+    h += linkSummary(dst, lr, S.reveal);
+    return h;
+  }
+
+  function hearsHTML(d, ch) {
+    if (!ch) return '';
+    const one = v => v == null ? `<b style="color:var(--fault)">${t('noUsable')}</b>` : `<b>${esc(vfmt(v))}</b>${vdb(v) ? ` <span class="muted">(${vdb(v)})</span>` : ''}`;
+    if ('M' in ch) return `<div class="hears">${t('hears', d.letter)} ${one(ch.M)}</div>`;
+    return `<div class="hears">${t('hears', d.letter)} L ${one(ch.L)} · R ${one(ch.R)}</div>`;
+  }
+  function issuesHTML(issues, emptyKey) {
+    if (!issues.length) return `<ul class="issues"><li class="ok">${t(emptyKey)}</li></ul>`;
+    const order = { fault: 0, warn: 1, info: 2 };
+    return '<ul class="issues">' + [...issues].sort((a, b) => order[a.sev] - order[b.sev]).map(i => `<li class="${i.sev}">${esc(i.msg)}</li>`).join('') + '</ul>';
+  }
+  function linkSummary(dst, lr, reveal) {
+    let h = '<div class="rep-block">';
+    if (dst) h += hearsHTML(dst, lr.channels);
+    else h += `<div class="hears muted">${t('plugFar')}</div>`;
+    // info notes explain how plugs meet jacks, so they only appear with the jack hint
+    h += issuesHTML(reveal ? lr.issues : lr.issues.filter(i => i.sev !== 'info'), 'noProblems') + '</div>';
+    return h;
+  }
+
+  function renderReport(sim) {
+    const el = $('#report');
+    let h = `<h2>${t('report')}</h2>`;
+    const ins = S.devices.filter(d => d.in);
+    if (!ins.length && !S.cables.length) { el.innerHTML = h + `<p class="muted small">${t('nothingYet')}</p>`; return; }
+    ins.forEach(d => {
+      const c = cableToIn(d);
+      if (!c) { h += `<div class="hears muted">${d.letter} (${esc(dn(d))}): ${t('nothingPlugged')}</div>`; return; }
+      h += hearsHTML(d, sim.inCh[d.id]);
+    });
+    const all = [];
+    S.cables.forEach(c => {
+      const a = dev(c.from), b = c.to ? dev(c.to) : null;
+      sim.links[c.id].issues.filter(i => i.sev !== 'info').forEach(i => all.push({ ...i, msg: `${a.letter} → ${b ? b.letter : '?'}: ${i.msg}` }));
+    });
+    if (S.cables.length) h += `<div class="rep-block">${issuesHTML(all, 'noFaults')}</div>`;
+    el.innerHTML = h;
+  }
+
+  function renderQuestion() {
+    const el = $('#question');
+    if (S.mode === 'sandbox') {
+      el.innerHTML = `<h2>${t('sandbox')}</h2><p class="qtext small muted" style="margin-bottom:0">${t('sandboxIntro')}</p>`;
+      return;
+    }
+    const q = QUESTIONS[S.q];
+    let h = `<div class="qhead"><span class="qnum">${t('qNum', S.q + 1, QUESTIONS.length)}</span><h2 style="margin:0">${esc(tx(q.title))}</h2></div>`;
+    h += `<p class="qtext">${esc(tx(q.text))}</p>`;
+    h += `<div class="qbtns"><button class="btn primary" data-act="check">${t('check')}</button><button class="btn" data-act="hint">${S.hint ? t('hideHint') : t('hint')}</button>
+      <button class="btn" data-act="prevQ"${S.q === 0 ? ' disabled' : ''}>${t('prev')}</button><button class="btn" data-act="nextQ"${S.q === QUESTIONS.length - 1 ? ' disabled' : ''}>${t('next')}</button></div>`;
+    if (S.hint) h += `<div class="hint small">${esc(tx(q.hint))}</div>`;
+    const r = S.result;
+    if (r) {
+      if (r.ok) h += `<div class="result ok"><b style="color:var(--accent)">${t('correct')}</b> ${esc(tx(q.explain) || '')}${r.notes.length ? '<ul class="small">' + r.notes.map(n => `<li>${esc(n)}</li>`).join('') + '</ul>' : ''}</div>`;
+      else h += `<div class="result bad"><b style="color:var(--fault)">${t('notYet')}</b><ul class="small">${r.fails.map(f => `<li>${esc(f)}</li>`).join('')}</ul></div>`;
+    }
+    el.innerHTML = h;
+  }
+
+  function renderToolbar() {
+    document.documentElement.lang = lang;
+    document.title = t('pageTitle');
+    $('#hTitle').textContent = t('pageTitle');
+    $('#hSub').textContent = t('sub');
+    $('#backLink').title = t('back');
+    document.querySelectorAll('#langSeg button').forEach(b => b.classList.toggle('on', b.dataset.lang === lang));
+    document.querySelectorAll('#modeSeg button').forEach(b => {
+      b.classList.toggle('on', b.dataset.mode === S.mode);
+      b.textContent = b.dataset.mode === 'sandbox' ? t('sandbox') : t('questions');
+    });
+    const qs = $('#qSelect');
+    qs.style.display = S.mode === 'quiz' ? '' : 'none';
+    qs.innerHTML = QUESTIONS.map((q, i) => `<option value="${i}">${i + 1}. ${esc(tx(q.title))}</option>`).join('');
+    qs.value = String(S.q);
+    const addLbl = { src: 'addSrc', proc: 'addProc', dst: 'addDst' };
+    document.querySelectorAll('[data-add]').forEach(b => {
+      b.style.display = S.mode === 'sandbox' ? '' : 'none';
+      b.textContent = t(addLbl[b.dataset.add]);
+    });
+    $('#resetBtn').textContent = S.mode === 'sandbox' ? t('resetSandbox') : t('clearCables');
+  }
+
+  function render() {
+    const sim = simulate();
+    renderToolbar();
+    renderQuestion();
+    renderRack(sim);
+    renderInspector(sim);
+    renderReport(sim);
+    saveSandbox();
+  }
+
+  // ---------- events ----------
+  document.querySelectorAll('#langSeg button').forEach(b => b.addEventListener('click', () => {
+    if (b.dataset.lang === lang) return;
+    lang = b.dataset.lang;
+    try { localStorage.setItem(LANG_KEY, lang); } catch (e) { /* storage unavailable */ }
+    if (S.result) check();
+    render();
+  }));
+  document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('click', () => {
+    const m = b.dataset.mode;
+    if (m === S.mode) return;
+    if (m === 'quiz') {
+      sandbox = { devices: S.devices, cables: S.cables };
+      S.mode = 'quiz';
+      loadQuestion(S.q);
+    } else {
+      S.mode = 'sandbox';
+      if (sandbox) { S.devices = sandbox.devices; S.cables = sandbox.cables; } else loadSandbox();
+      S.sel = null; S.pending = null; S.result = null; S.msg = '';
+    }
+    render();
+  }));
+  $('#qSelect').addEventListener('change', e => { loadQuestion(+e.target.value); render(); });
+  document.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => addDevice(b.dataset.add)));
+  $('#resetBtn').addEventListener('click', () => {
+    if (S.mode === 'sandbox') {
+      if (!confirm(t('confirmReset'))) return;
+      defaultSandbox(); S.sel = null; S.pending = null; S.msg = ''; S.result = null; render();
+    } else { loadQuestion(S.q); render(); }
+  });
+
+  $('#question').addEventListener('click', e => {
+    const b = e.target.closest('[data-act]');
+    if (!b) return;
+    const act = b.dataset.act;
+    if (act === 'check') { check(); render(); }
+    else if (act === 'hint') { S.hint = !S.hint; render(); }
+    else if (act === 'prevQ' && S.q > 0) { loadQuestion(S.q - 1); render(); }
+    else if (act === 'nextQ' && S.q < QUESTIONS.length - 1) { loadQuestion(S.q + 1); render(); }
+  });
+
+  // rack: dragging, ports, cables
+  const inner = $('#rackInner');
+  let drag = null;
+  inner.addEventListener('pointerdown', e => {
+    if (e.target.closest('.port')) return;
+    const card = e.target.closest('.card');
+    if (!card) return;
+    const d = dev(card.dataset.dev);
+    drag = { d, card, sx: e.clientX, sy: e.clientY, ox: d.x, oy: d.y, moved: false };
+    card.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+  window.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+    if (!drag.moved && Math.abs(dx) + Math.abs(dy) < 4) return;
+    drag.moved = true;
+    drag.d.x = Math.max(12, drag.ox + dx);
+    drag.d.y = Math.max(8, drag.oy + dy);
+    drag.card.style.left = drag.d.x + 'px';
+    drag.card.style.top = drag.d.y + 'px';
+    updateWiresFor(drag.d);
+  });
+  window.addEventListener('pointerup', () => {
+    if (!drag) return;
+    const { d, moved } = drag;
+    drag = null;
+    if (!moved) { S.sel = { t: 'dev', id: d.id }; S.pending = null; S.msg = ''; }
+    render();
+  });
+  // drag a cable from an output port and drop it on an input port; a press without movement falls through to click
+  let pdrag = null, suppressRackClick = false;
+  const canDropOn = (d, from, ex) => d && d.in && d.id !== from.id && (!cableToIn(d) || cableToIn(d) === ex);
+  inner.addEventListener('pointerdown', e => {
+    const port = e.target.closest('.port.out');
+    if (!port || e.button > 0) return;
+    const from = dev(port.dataset.dev);
+    const [x0, y0] = portPos(from, 'out');
+    pdrag = { from, ex: cableFromOut(from), sx: e.clientX, sy: e.clientY, x0, y0, path: null, over: null };
+    e.preventDefault();
+  });
+  window.addEventListener('pointermove', e => {
+    if (!pdrag) return;
+    if (!pdrag.path) {
+      if (Math.abs(e.clientX - pdrag.sx) + Math.abs(e.clientY - pdrag.sy) < 5) return;
+      const svg = inner.querySelector('svg.wires');
+      const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      p.setAttribute('class', 'cab sel drag-cab');
+      svg.appendChild(p);
+      pdrag.path = p;
+      // highlight every input this cable could go to
+      inner.querySelectorAll('.port.in').forEach(el => {
+        el.classList.toggle('target', canDropOn(dev(el.dataset.dev), pdrag.from, pdrag.ex));
+      });
+    }
+    const r = inner.getBoundingClientRect();
+    const x2 = e.clientX - r.left, y2 = e.clientY - r.top;
+    const dx = Math.max(50, Math.abs(x2 - pdrag.x0) / 2);
+    pdrag.path.setAttribute('d', `M ${pdrag.x0} ${pdrag.y0} C ${pdrag.x0 + dx} ${pdrag.y0}, ${x2 - dx} ${y2}, ${x2} ${y2}`);
+    const hit = document.elementFromPoint(e.clientX, e.clientY);
+    const el = hit && hit.closest('.port.in');
+    const ok = el && canDropOn(dev(el.dataset.dev), pdrag.from, pdrag.ex) ? el : null;
+    if (pdrag.over && pdrag.over !== ok) pdrag.over.classList.remove('drop-ok');
+    if (ok) ok.classList.add('drop-ok');
+    pdrag.over = ok;
+  });
+  window.addEventListener('pointerup', () => {
+    if (!pdrag) return;
+    const d = pdrag;
+    pdrag = null;
+    if (!d.path) return; // no movement: the click handler deals with it
+    suppressRackClick = true;
+    setTimeout(() => { suppressRackClick = false; }, 0);
+    if (!d.over) { render(); return; }
+    const to = dev(d.over.dataset.dev);
+    mutate(() => {
+      let c = d.ex;
+      if (c) c.to = to.id;
+      else {
+        c = { id: 'c' + (S.uid++), from: d.from.id, to: to.id, conn: { a: 'TRS', b: 'TRS' }, type: 3, wires: [] };
+        S.cables.push(c);
+      }
+      S.sel = { t: 'cab', id: c.id }; S.pending = null;
+      msg('plugged', d.from.letter, to.letter);
+    });
+  });
+
+  inner.addEventListener('click', e => {
+    if (suppressRackClick) { suppressRackClick = false; return; }
+    const port = e.target.closest('.port');
+    if (port) {
+      const d = dev(port.dataset.dev);
+      if (port.dataset.port === 'out') clickOutPort(d); else clickInPort(d);
+      return;
+    }
+    const cp = e.target.closest('[data-cable]');
+    if (cp) { S.sel = { t: 'cab', id: cp.dataset.cable }; S.pending = null; S.msg = ''; render(); return; }
+    if (!e.target.closest('.card')) {
+      if (S.sel) { S.sel = null; S.pending = null; S.msg = ''; render(); }
+    }
+  });
+
+  // inspector
+  const insp = $('#inspector');
+  const selCable = () => (S.sel && S.sel.t === 'cab') ? S.cables.find(c => c.id === S.sel.id) : null;
+  // drag a wire from a plug pin to a conductor end (or back); a press without movement falls through to click
+  let wdrag = null, suppressClick = false;
+  const nodeInfo = el => {
+    const pin = el && el.closest('[data-pin]'), cond = el && el.closest('[data-cond]');
+    if (pin) { const [end, id] = pin.dataset.pin.split('|'); return { el: pin, type: 'pin', end, id }; }
+    if (cond) { const [end, id] = cond.dataset.cond.split('|'); return { el: cond, type: 'cond', end, id }; }
+    return null;
+  };
+  const svgPoint = (svg, e) => {
+    const p = svg.createSVGPoint();
+    p.x = e.clientX; p.y = e.clientY;
+    return p.matrixTransform(svg.getScreenCTM().inverse());
+  };
+  insp.addEventListener('pointerdown', e => {
+    const n = nodeInfo(e.target);
+    const cab = selCable();
+    if (!n || !cab || e.button > 0) return;
+    const svg = n.el.ownerSVGElement;
+    wdrag = { cab, n, svg, sx: e.clientX, sy: e.clientY, x0: +n.el.getAttribute('cx'), y0: +n.el.getAttribute('cy'), line: null, over: null };
+    e.preventDefault();
+  });
+  window.addEventListener('pointermove', e => {
+    if (!wdrag) return;
+    if (!wdrag.line) {
+      if (Math.abs(e.clientX - wdrag.sx) + Math.abs(e.clientY - wdrag.sy) < 5) return;
+      const ln = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      ln.setAttribute('class', 'drag-wire');
+      ln.setAttribute('stroke', wdrag.n.type === 'cond' ? COND[wdrag.n.id].color : '#fff');
+      ln.setAttribute('x1', wdrag.x0); ln.setAttribute('y1', wdrag.y0);
+      wdrag.svg.appendChild(ln);
+      wdrag.line = ln;
+      wdrag.n.el.classList.add('drag-src');
+      S.pending = null;
+    }
+    const p = svgPoint(wdrag.svg, e);
+    wdrag.line.setAttribute('x2', p.x); wdrag.line.setAttribute('y2', p.y);
+    const t2 = nodeInfo(document.elementFromPoint(e.clientX, e.clientY));
+    const ok = t2 && t2.end === wdrag.n.end && t2.type !== wdrag.n.type ? t2 : null;
+    if (wdrag.over && (!ok || wdrag.over.el !== ok.el)) wdrag.over.el.classList.remove('drop-ok');
+    if (ok) ok.el.classList.add('drop-ok');
+    wdrag.over = ok;
+  });
+  window.addEventListener('pointerup', () => {
+    if (!wdrag) return;
+    const d = wdrag;
+    wdrag = null;
+    if (!d.line) return; // no movement: the click handler deals with it
+    suppressClick = true;
+    setTimeout(() => { suppressClick = false; }, 0);
+    if (d.over) {
+      const pin = d.n.type === 'pin' ? d.n.id : d.over.id, cond = d.n.type === 'cond' ? d.n.id : d.over.id;
+      if (!d.cab.wires.some(w => w[0] === d.n.end && w[1] === pin && w[2] === cond)) { toggleWire(d.cab, d.n.end, pin, cond); return; }
+    }
+    render();
+  });
+
+  insp.addEventListener('click', e => {
+    if (suppressClick) { suppressClick = false; return; }
+    const cab = selCable();
+    const tg = e.target;
+    const act = tg.closest('[data-act]');
+    if (act) {
+      const a = act.dataset.act;
+      if (a === 'delDev') deleteDevice(S.sel.id);
+      else if (a === 'delCab' && cab) mutate(() => { S.cables = S.cables.filter(c => c !== cab); S.sel = null; S.pending = null; });
+      else if (a === 'toggleJack') { S.reveal = !S.reveal; render(); }
+      else if (a === 'clearWires' && cab) mutate(() => { cab.wires = []; S.pending = null; });
+      return;
+    }
+    if (!cab) return;
+    const ca = tg.closest('[data-conn-a]'), cb = tg.closest('[data-conn-b]'), ct = tg.closest('[data-ctype]');
+    if (ca || cb) {
+      const end = ca ? 'a' : 'b', v = ca ? ca.dataset.connA : cb.dataset.connB;
+      if (cab.conn[end] === v) return;
+      mutate(() => { cab.conn[end] = v; cab.wires = cab.wires.filter(w => w[0] !== end); S.pending = null; });
+      return;
+    }
+    if (ct) {
+      const v = +ct.dataset.ctype;
+      if (cab.type === v) return;
+      mutate(() => { cab.type = v; cab.wires = cab.wires.filter(w => condsOf(cab).includes(w[2])); S.pending = null; });
+      return;
+    }
+    const pin = tg.closest('[data-pin]'), cond = tg.closest('[data-cond]'), wire = tg.closest('[data-wire]');
+    if (pin) { const [end, id] = pin.dataset.pin.split('|'); clickNode(cab, 'pin', end, id); return; }
+    if (cond) { const [end, id] = cond.dataset.cond.split('|'); clickNode(cab, 'cond', end, id); return; }
+    if (wire) { const w = cab.wires[+wire.dataset.wire]; if (w) toggleWire(cab, w[0], w[1], w[2]); }
+  });
+  insp.addEventListener('change', e => {
+    const tg = e.target;
+    const d = S.sel && S.sel.t === 'dev' ? dev(S.sel.id) : null;
+    if (tg.id === 'cabTo') {
+      const cab = selCable();
+      mutate(() => { cab.to = tg.value || null; S.msg = ''; });
+    } else if (d && tg.id === 'devIn') mutate(() => { d.in = tg.value; });
+    else if (d && tg.id === 'devOut') mutate(() => { d.out = tg.value; });
+    else if (d && tg.id === 'devPin3') mutate(() => { d.pin3 = tg.checked; });
+  });
+  insp.addEventListener('input', e => {
+    if (e.target.id !== 'devName') return;
+    const d = dev(S.sel.id);
+    d.name = e.target.value || d.letter;
+    const sim = simulate();
+    renderRack(sim); renderReport(sim); saveSandbox();
+  });
+  window.addEventListener('resize', () => renderRack(simulate()));
+  window.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && S.pending) { S.pending = null; render(); }
+  });
+
+  // ---------- start ----------
+  loadSandbox();
+  render();
+})();
+</script>
+</body>
+</html>
