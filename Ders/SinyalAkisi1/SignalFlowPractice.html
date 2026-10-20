@@ -213,6 +213,24 @@
     .port.drop-ok { background: var(--accent); transform: scale(1.3); box-shadow: 0 0 16px var(--accent); animation: none; }
     .drag-cab { stroke-dasharray: 8 5; }
     .langseg { margin-left: auto; }
+    button.why {
+      margin-left: 6px; padding: 0 8px; border-radius: 10px; border: 1px solid currentColor; background: transparent;
+      color: inherit; font-size: 11px; font-weight: bold; cursor: pointer; line-height: 18px; opacity: 0.9;
+    }
+    button.why:hover { opacity: 1; background: rgba(255, 255, 255, 0.08); }
+    dialog#whyDlg {
+      max-width: min(640px, calc(100vw - 32px)); width: 100%; max-height: calc(100vh - 48px); overflow: auto;
+      background: #0e1813; color: var(--text); border: 1px solid var(--accent); border-radius: 10px; padding: 0;
+      box-shadow: 0 0 30px rgba(0, 255, 150, 0.25); font-family: var(--font); line-height: 1.55;
+    }
+    dialog#whyDlg::backdrop { background: rgba(0, 0, 0, 0.7); }
+    .why-in { padding: 18px 20px; }
+    .why-head { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
+    .why-head h2 { margin: 0; font-size: 16px; color: var(--accent); letter-spacing: 1px; }
+    .why-body { font-size: 13.5px; }
+    .why-body ul { padding-left: 20px; }
+    .why-body li { margin: 4px 0; }
+    .why-body b { color: #fff; }
     html[lang="tr"] .lang-en, html[lang="en"] .lang-tr { display: none; }
   </style>
 </head>
@@ -328,6 +346,13 @@
   </details>
 </div>
 
+<dialog id="whyDlg" aria-labelledby="whyTitle">
+  <div class="why-in">
+    <div class="why-head"><h2 id="whyTitle"></h2><button class="btn" id="whyClose"></button></div>
+    <div class="why-body" id="whyBody"></div>
+  </div>
+</dialog>
+
 <script>
 (() => {
   'use strict';
@@ -429,7 +454,7 @@
       sandboxIntro: 'Build any setup you like. Add sources, processors and destinations, choose their port types, then connect them with cables you wire yourself. Every input shows what it actually hears. Switch to <b style="color:var(--accent)">Questions</b> for guided exercises.',
       qNum: (i, n) => `QUESTION ${i} / ${n}`,
       check: 'Check answer', hint: 'Hint', hideHint: 'Hide hint', prev: '← Prev', next: 'Next →',
-      correct: '✓ Correct!', notYet: '✖ Not yet.'
+      correct: '✓ Correct!', notYet: '✖ Not yet.', why: 'Why?', close: 'Close'
     },
     tr: {
       pageTitle: 'Sinyal Akışı Pratiği',
@@ -516,9 +541,220 @@
       sandboxIntro: 'İstediğiniz düzeneği kurun. Kaynak, işlemci ve hedef ekleyin, port türlerini seçin, sonra kendi lehimlediğiniz kablolarla bağlayın. Her giriş gerçekte ne duyduğunu gösterir. Yönlendirmeli alıştırmalar için <b style="color:var(--accent)">Sorular</b> moduna geçin.',
       qNum: (i, n) => `SORU ${i} / ${n}`,
       check: 'Cevabı kontrol et', hint: 'İpucu', hideHint: 'İpucunu gizle', prev: '← Önceki', next: 'Sonraki →',
-      correct: '✓ Doğru!', notYet: '✖ Henüz değil.'
+      correct: '✓ Doğru!', notYet: '✖ Henüz değil.', why: 'Neden?', close: 'Kapat'
     }
   };
+  // explanations behind the "Why?" buttons on faults, warnings and notes
+  const WHY = {
+    unbShort: {
+      title: { en: 'Why you should never short an unbalanced output', tr: 'Dengesiz bir çıkış neden asla kısa devre edilmemeli?' },
+      body: {
+        en: `<p>An unbalanced output drives the signal on one conductor, measured against ground. Its output stage is built to drive a fairly high-impedance input (around 10 kΩ) with very little current, and its own output impedance is low (roughly 50–600 Ω).</p>
+<p>Shorting that conductor to ground puts almost 0 Ω across the output stage:</p>
+<ul>
+<li><b>The signal is lost.</b> The output is held at 0 V, so nothing reaches the input. A TS plug in a stereo output does exactly this to R, because its sleeve also touches the ring contact.</li>
+<li><b>The output stage is overloaded.</b> It pushes as much current as it can. Line-level op-amps usually limit their current and survive, but they run hot and distort. Headphone amplifiers overheat sooner, and a shorted power-amplifier speaker output can blow fuses or destroy the output transistors within seconds.</li>
+<li><b>Other channels suffer.</b> The extra current flows through the shared power supply and ground, which can add distortion, hum or crosstalk to channels that are wired correctly.</li>
+</ul>
+<p><b>Rule:</b> an output you don't need can be left open, but never short it to ground or to another output.</p>`,
+        tr: `<p>Dengesiz bir çıkış, sinyali toprağa göre tek bir iletken üzerinden gönderir. Çıkış katı, oldukça yüksek empedanslı bir girişi (yaklaşık 10 kΩ) çok küçük bir akımla sürmek için tasarlanmıştır ve kendi çıkış empedansı düşüktür (yaklaşık 50–600 Ω).</p>
+<p>Bu iletkeni toprağa kısa devre etmek, çıkış katının uçlarına neredeyse 0 Ω bağlamak demektir:</p>
+<ul>
+<li><b>Sinyal kaybolur.</b> Çıkış 0 V'ta tutulur, bu yüzden girişe hiçbir şey ulaşmaz. Stereo çıkışa takılan TS fiş R kanalına tam olarak bunu yapar, çünkü sleeve kısmı ring kontağına da değer.</li>
+<li><b>Çıkış katı aşırı yüklenir.</b> Verebildiği en yüksek akımı vermeye çalışır. Hat seviyesindeki op-amp'ler genellikle akımlarını sınırlar ve hasar görmez, ama ısınır ve distorsiyon üretir. Kulaklık amfileri daha çabuk aşırı ısınır; kısa devre edilmiş bir güç amfisi hoparlör çıkışı ise saniyeler içinde sigorta attırabilir ya da çıkış transistörlerini yakabilir.</li>
+<li><b>Diğer kanallar da etkilenir.</b> Fazladan akım ortak güç kaynağı ve toprak üzerinden akar; bu da doğru bağlanmış kanallarda bile distorsiyon, uğultu ya da kanallar arası sızıntı (crosstalk) oluşturabilir.</li>
+</ul>
+<p><b>Kural:</b> Kullanmadığınız bir çıkışı açık bırakabilirsiniz, ama onu asla toprağa ya da başka bir çıkışa kısa devre etmeyin.</p>`
+      }
+    },
+    balShort: {
+      title: { en: 'Why a grounded balanced leg is only a warning', tr: 'Topraklanmış dengeli çıkış bacağı neden sadece bir uyarı?' },
+      body: {
+        en: `<p>A balanced output sends the signal on two legs: hot (+x) and cold (−x). Whether grounding one leg is safe depends on how the output is built:</p>
+<ul>
+<li><b>Transformer-balanced:</b> safe. The winding simply floats against ground.</li>
+<li><b>Impedance-balanced</b> (signal only on hot, cold is just a resistor to ground): safe. Nothing drives cold.</li>
+<li><b>Servo / cross-coupled:</b> designed for it. The output compensates automatically and keeps its level.</li>
+<li><b>Two separate drivers</b> (one amplifier for hot, one for cold): grounding a leg shorts a real output, with the same problems as shorting an unbalanced output.</li>
+</ul>
+<p>The lab can't know which kind your gear is, so this is a warning, not a fault. Check the device's manual; if it says nothing, leaving the unused leg open is the safer choice.</p>`,
+        tr: `<p>Dengeli bir çıkış sinyali iki bacak üzerinden gönderir: hot (+x) ve cold (−x). Bir bacağı topraklamanın güvenli olup olmadığı, çıkışın nasıl tasarlandığına bağlıdır:</p>
+<ul>
+<li><b>Trafolu (transformer) dengeli çıkış:</b> güvenlidir. Sargı toprağa göre serbestçe durur.</li>
+<li><b>Empedans dengeli çıkış</b> (sinyal sadece hot üzerinde, cold sadece bir dirençle toprağa bağlı): güvenlidir. Cold'u süren bir şey yoktur.</li>
+<li><b>Servo / çapraz bağlı (cross-coupled) çıkış:</b> buna göre tasarlanmıştır. Çıkış bunu otomatik olarak telafi eder ve seviyesini korur.</li>
+<li><b>İki ayrı sürücülü çıkış</b> (hot için bir, cold için ayrı bir amfi): bir bacağı topraklamak gerçek bir çıkışı kısa devre etmek demektir; dengesiz bir çıkışı kısa devre etmekle aynı sorunları doğurur.</li>
+</ul>
+<p>Uygulama cihazınızın hangi türde olduğunu bilemez; bu yüzden bu bir hata değil, uyarıdır. Cihazın kılavuzuna bakın; kılavuzda bilgi yoksa kullanılmayan bacağı açık bırakmak daha güvenli seçenektir.</p>`
+      }
+    },
+    clash: {
+      title: { en: 'Why two outputs must never be tied together', tr: 'İki çıkış neden asla birbirine bağlanmamalı?' },
+      body: {
+        en: `<p>Two outputs tied together fight each other. Each output stage tries to set the shared wire to its own signal, and because both have a low output impedance, a large current flows from one into the other whenever the signals differ.</p>
+<ul>
+<li>Both outputs are overloaded, just like when they are shorted to ground: they run hot, distort and can be damaged.</li>
+<li>What you hear is roughly an average of the two signals, but distorted, quieter, and different from one piece of gear to another.</li>
+</ul>
+<p>To combine signals (for example L and R into mono), use a mixer or a summing box. Passive summing boxes put a resistor (typically 1–10 kΩ) in series with each output so the outputs can't load each other.</p>`,
+        tr: `<p>Birbirine bağlanan iki çıkış birbiriyle çekişir. Her çıkış katı ortak teli kendi sinyaline getirmeye çalışır; ikisinin de çıkış empedansı düşük olduğu için, sinyaller farklı olduğu her an birinden diğerine büyük bir akım akar.</p>
+<ul>
+<li>İki çıkış da toprağa kısa devre edilmiş gibi aşırı yüklenir: ısınır, distorsiyon üretir ve hasar görebilir.</li>
+<li>Duyduğunuz şey kabaca iki sinyalin ortalamasıdır; ama bozuk, daha düşük seviyeli ve cihazdan cihaza farklıdır.</li>
+</ul>
+<p>Sinyalleri birleştirmek için (örneğin L ve R'yi mono'ya toplamak için) bir mikser ya da toplama kutusu (summing box) kullanın. Pasif toplama kutuları, çıkışlar birbirini yüklemesin diye her çıkışa seri bir direnç (genellikle 1–10 kΩ) koyar.</p>`
+      }
+    },
+    gndToSig: {
+      title: { en: 'Why ground must go to ground', tr: 'Toprak neden toprağa bağlanmalı?' },
+      body: {
+        en: `<p>Ground is the reference that every signal voltage is measured against. Here the destination's ground contact is connected to one of the source's signal outputs instead of the source's ground.</p>
+<ul>
+<li>The destination now measures its inputs against a moving voltage, so what it hears is wrong (often the difference between two signals).</li>
+<li>Device grounds are usually tied to the chassis and, through mains earth, to other gear. A signal output connected to that ground is effectively shorted, which overloads it.</li>
+</ul>
+<p>Sleeve / Pin 1 / Shield should always connect ground to ground.</p>`,
+        tr: `<p>Toprak, bütün sinyal gerilimlerinin ölçüldüğü referanstır. Burada hedef cihazın toprak kontağı, kaynak cihazın toprağı yerine onun sinyal çıkışlarından birine bağlanmış.</p>
+<ul>
+<li>Hedef cihaz artık girişlerini sürekli değişen bir gerilime göre ölçer; bu yüzden duyduğu şey yanlıştır (çoğu zaman iki sinyalin farkı).</li>
+<li>Cihaz toprakları genellikle kasaya ve şebeke toprağı üzerinden diğer cihazlara bağlıdır. Bu toprağa bağlanan bir sinyal çıkışı fiilen kısa devre edilmiş olur ve aşırı yüklenir.</li>
+</ul>
+<p>Sleeve / Pin 1 / Shield her zaman toprağı toprağa bağlamalıdır.</p>`
+      }
+    },
+    noShield: {
+      title: { en: 'Why a balanced cable still needs its shield', tr: 'Dengeli kablonun shield\'a neden yine de ihtiyacı var?' },
+      body: {
+        en: `<p>A balanced input listens to the difference between hot and cold, so the signal can pass without a ground connection. The shield and ground link are still needed:</p>
+<ul>
+<li><b>Shielding:</b> the shield catches electrical interference and drains it to ground. If it isn't connected, the interference reaches hot and cold. A balanced input rejects most of it, but not all.</li>
+<li><b>Common-mode range:</b> without a shared ground, the voltage between the two devices can drift. Too much drift is more than the input can reject, and you hear hum or buzz.</li>
+<li><b>Phantom power:</b> condenser microphones get their +48 V on pins 2 and 3, with pin 1 as the return path. Without pin 1 there is no phantom power, and the mic stays silent.</li>
+</ul>
+<p>Connect pin 1 / the shield on both ends. Disconnecting it on one end ("ground lift") is a deliberate technique for fixing ground loops, not the normal way to wire a cable.</p>`,
+        tr: `<p>Dengeli giriş hot ile cold arasındaki farkı dinler; bu yüzden sinyal toprak bağlantısı olmadan da geçebilir. Ama shield ve toprak bağlantısına yine de ihtiyaç vardır:</p>
+<ul>
+<li><b>Ekranlama:</b> Shield elektriksel paraziti yakalar ve toprağa aktarır. Bağlı değilse parazit hot ve cold iletkenlerine ulaşır. Dengeli giriş bunun çoğunu bastırır, ama hepsini değil.</li>
+<li><b>Ortak mod aralığı:</b> Ortak bir toprak olmadan iki cihaz arasındaki gerilim kayabilir. Kayma çok büyürse giriş bunu bastıramaz ve uğultu ya da vızıltı duyarsınız.</li>
+<li><b>Phantom power:</b> Kondenser mikrofonlar +48 V'u pin 2 ve pin 3 üzerinden alır; dönüş yolu pin 1'dir. Pin 1 olmadan phantom power olmaz ve mikrofon ses vermez.</li>
+</ul>
+<p>Pin 1'i / shield'ı iki uçta da bağlayın. Bir uçta bağlantıyı kesmek ("ground lift"), toprak döngülerini (ground loop) çözmek için bilinçli olarak kullanılan bir yöntemdir; normal kablo bağlantısı değildir.</p>`
+      }
+    },
+    noGround: {
+      title: { en: 'Why an unbalanced signal needs ground', tr: 'Dengesiz sinyalin neden toprağa ihtiyacı var?' },
+      body: {
+        en: `<p>An electrical signal needs a complete loop: current goes out on the signal conductor and comes back on a return path. In an unbalanced connection, the return path is ground (Sleeve / Pin 1 / Shield).</p>
+<ul>
+<li>Without a ground connection there is no loop, so the input can't receive the signal properly.</li>
+<li>In real life you often still hear something, because the devices may be connected through mains earth or other cables. It will be quiet, thin and full of hum and buzz.</li>
+</ul>
+<p>In an unbalanced cable, always connect ground on both ends.</p>`,
+        tr: `<p>Elektrik sinyalinin tam bir devreye ihtiyacı vardır: akım sinyal iletkeninden gider ve bir dönüş yolundan geri gelir. Dengesiz bir bağlantıda dönüş yolu topraktır (Sleeve / Pin 1 / Shield).</p>
+<ul>
+<li>Toprak bağlantısı yoksa devre tamamlanmaz; bu yüzden giriş sinyali düzgün alamaz.</li>
+<li>Gerçek hayatta çoğu zaman yine de bir şey duyarsınız, çünkü cihazlar şebeke toprağı ya da başka kablolar üzerinden birbirine bağlı olabilir. Ama ses kısık, ince ve uğultu, vızıltı dolu olur.</li>
+</ul>
+<p>Dengesiz bir kabloda toprağı her zaman iki uçta da bağlayın.</p>`
+      }
+    },
+    floatLocal: {
+      title: { en: 'Why the destination\'s own ground is not enough', tr: 'Hedef cihazın kendi toprağı neden yetmiyor?' },
+      body: {
+        en: `<p>This input is tied to the destination's own ground, but that ground isn't connected to the source device. Seen from the source, the input is floating: the two devices have no shared reference to measure the signal against.</p>
+<p>Connect the source's ground (Sleeve / Pin 1) to the destination's ground through the cable's Shield.</p>`,
+        tr: `<p>Bu giriş hedef cihazın kendi toprağına bağlı, ama o toprak kaynak cihaza bağlı değil. Kaynak cihaz açısından giriş boşta (floating) kalır: iki cihazın sinyali ölçebilecekleri ortak bir referansı yoktur.</p>
+<p>Kaynak cihazın toprağını (Sleeve / Pin 1), kablonun Shield iletkeni üzerinden hedef cihazın toprağına bağlayın.</p>`
+      }
+    },
+    floating: {
+      title: { en: 'Why a floating input hums', tr: 'Boşta kalan giriş neden uğultu yapar?' },
+      body: {
+        en: `<p>An input that isn't connected to anything is "floating". Inputs have a very high impedance (thousands to millions of ohms), so a floating input reacts to every electrical field around it: mains wiring, lights, phones, even your hand.</p>
+<ul>
+<li>You hear it as hum (50 Hz in Türkiye and Europe, 60 Hz in the Americas), buzz or hiss, sometimes very loud.</li>
+<li>On a balanced input, a floating cold pin also ruins the balance, so the input can no longer cancel interference.</li>
+</ul>
+<p>Every input the device reads must be connected to a signal or to ground. For example, when an unbalanced signal goes into a balanced input, cold (Ring / Pin 3) is tied to ground.</p>`,
+        tr: `<p>Hiçbir yere bağlı olmayan bir giriş "boşta" (floating) kalmıştır. Girişlerin empedansı çok yüksektir (binlerce ile milyonlarca ohm); bu yüzden boşta kalan bir giriş çevresindeki her elektrik alanından etkilenir: şebeke kabloları, lambalar, telefonlar, hatta eliniz.</p>
+<ul>
+<li>Bunu uğultu (Türkiye ve Avrupa'da 50 Hz, Amerika'da 60 Hz), vızıltı ya da hışırtı olarak, bazen çok yüksek sesle duyarsınız.</li>
+<li>Dengeli bir girişte boşta kalan cold pini dengeyi de bozar; giriş artık paraziti yok edemez.</li>
+</ul>
+<p>Cihazın okuduğu her giriş bir sinyale ya da toprağa bağlı olmalıdır. Örneğin dengesiz bir sinyal dengeli bir girişe giderken cold (Ring / Pin 3) toprağa bağlanır.</p>`
+      }
+    },
+    hotColdJoined: {
+      title: { en: 'Why joining hot and cold cancels the signal', tr: 'Hot ile cold\'u birleştirmek sinyali neden yok eder?' },
+      body: {
+        en: `<p>A balanced input hears (Hot − Cold) ÷ 2. If hot and cold are joined, they always carry the same voltage, so the difference is always zero.</p>
+<p>This is the same reason a balanced input rejects interference: anything that appears equally on both conductors cancels out. Here the wanted signal appears equally on both, so it cancels too.</p>
+<p>Keep hot and cold on separate conductors.</p>`,
+        tr: `<p>Dengeli giriş (Hot − Cold) ÷ 2 değerini duyar. Hot ve cold birleştirilirse ikisi her zaman aynı gerilimi taşır; bu yüzden aradaki fark her zaman sıfırdır.</p>
+<p>Dengeli girişin paraziti bastırmasının nedeni de budur: iki iletkende eşit olarak görünen her şey birbirini yok eder. Burada istenen sinyal de iki iletkende eşit göründüğü için o da yok olur.</p>
+<p>Hot ve cold'u ayrı iletkenlerde tutun.</p>`
+      }
+    },
+    loop: {
+      title: { en: 'Why feedback loops are a problem', tr: 'Geri besleme döngüleri neden sorun yaratır?' },
+      body: {
+        en: `<p>Here the signal leaves a device, passes through other gear and comes back into the same device's input. Every trip around the loop adds the signal on top of itself again.</p>
+<ul>
+<li>If the total gain around the loop is 1 or more, the signal keeps growing until it becomes a loud howl or squeal, just like microphone feedback.</li>
+<li>Even with lower gain it causes ringing and a coloured, comb-filtered sound.</li>
+</ul>
+<p>Signal flow should go one way: source → processors → destination.</p>`,
+        tr: `<p>Burada sinyal bir cihazdan çıkıyor, başka cihazlardan geçiyor ve aynı cihazın girişine geri dönüyor. Döngünün her turunda sinyal kendi üzerine tekrar eklenir.</p>
+<ul>
+<li>Döngüdeki toplam kazanç 1 ya da daha fazlaysa sinyal sürekli büyür ve mikrofon geri beslemesinde (feedback) olduğu gibi yüksek bir ötme ya da çınlamaya dönüşür.</li>
+<li>Kazanç daha düşük olsa bile çınlamaya ve renklenmiş, tarak filtreli (comb filter) bir sese yol açar.</li>
+</ul>
+<p>Sinyal akışı tek yönlü olmalıdır: kaynak → işlemciler → hedef.</p>`
+      }
+    },
+    noteTs: {
+      title: { en: 'What a TS plug does in a TRS jack', tr: 'TS fiş TRS jakta ne yapar?' },
+      body: {
+        en: `<p>A TS plug has only two parts, Tip and Sleeve, and the sleeve is long. In a stereo or balanced (TRS) jack, the jack's ring contact rests on the plug's sleeve.</p>
+<ul>
+<li>On an <b>output</b> jack, this shorts the ring signal (R or cold) to ground. For an unbalanced output that is a fault; for a balanced cold leg it depends on the gear.</li>
+<li>On an <b>input</b> jack, the ring input is grounded. A stereo input gets silence on R; a balanced input works like an unbalanced one with cold grounded (−6 dB).</li>
+</ul>`,
+        tr: `<p>TS fişin sadece iki kısmı vardır: Tip ve Sleeve; sleeve kısmı uzundur. Stereo ya da dengeli (TRS) bir jakta, jakın ring kontağı fişin sleeve kısmına değer.</p>
+<ul>
+<li>Bir <b>çıkış</b> jakında bu, ring sinyalini (R ya da cold) toprağa kısa devre eder. Dengesiz bir çıkış için bu bir hatadır; dengeli bir cold bacağı için cihaza bağlıdır.</li>
+<li>Bir <b>giriş</b> jakında ring girişi topraklanır. Stereo bir giriş R kanalında sessizlik alır; dengeli bir giriş, cold'u topraklanmış dengesiz bir giriş gibi çalışır (−6 dB).</li>
+</ul>`
+      }
+    },
+    noteTrs: {
+      title: { en: 'What a TRS plug does in a mono jack', tr: 'TRS fiş mono jakta ne yapar?' },
+      body: {
+        en: `<p>A mono (TS) jack has only a tip contact and a ground contact. When a TRS plug goes in, the jack's ground contact also touches the plug's ring, so the ring is connected to ground.</p>
+<ul>
+<li>Whatever you wire to the plug's ring is grounded. If that is an output signal, it is shorted.</li>
+<li>That's why TRS → TS adapters connect ring and sleeve on purpose: it makes the grounding explicit and predictable.</li>
+</ul>`,
+        tr: `<p>Mono (TS) bir jakta sadece bir tip kontağı ve bir toprak kontağı vardır. TRS fiş takıldığında jakın toprak kontağı fişin ring kısmına da değer; yani ring toprağa bağlanır.</p>
+<ul>
+<li>Fişin ring kısmına ne bağladıysanız topraklanır. Bu bir çıkış sinyaliyse kısa devre olur.</li>
+<li>TRS → TS adaptörlerinin ring ile sleeve'i bilerek birleştirmesinin nedeni budur: topraklamayı açık ve öngörülebilir hale getirir.</li>
+</ul>`
+      }
+    },
+    level: {
+      title: { en: 'Why the level is 6 dB lower', tr: 'Seviye neden 6 dB daha düşük?' },
+      body: {
+        en: `<p>A balanced input hears (Hot − Cold) ÷ 2. A true balanced signal has +x on hot and −x on cold, so the input hears (x − (−x)) ÷ 2 = x, the full level.</p>
+<p>An unbalanced signal has x on hot and 0 V on cold (cold is tied to ground), so the input hears (x − 0) ÷ 2 = x ÷ 2. Half the voltage is 20·log₁₀(0.5) ≈ −6 dB.</p>
+<p>This is normal and not a fault. Turn the gain up by 6 dB to make up for it.</p>`,
+        tr: `<p>Dengeli giriş (Hot − Cold) ÷ 2 değerini duyar. Gerçek dengeli bir sinyalde hot üzerinde +x, cold üzerinde −x vardır; giriş (x − (−x)) ÷ 2 = x, yani tam seviye duyar.</p>
+<p>Dengesiz bir sinyalde hot üzerinde x, cold üzerinde 0 V vardır (cold toprağa bağlıdır); giriş (x − 0) ÷ 2 = x ÷ 2 duyar. Gerilimin yarısı 20·log₁₀(0,5) ≈ −6 dB demektir.</p>
+<p>Bu normaldir, bir hata değildir. Telafi etmek için kazancı (gain) 6 dB artırın.</p>`
+      }
+    }
+  };
+
   function t(key, ...args) {
     const v = key in L10N[lang] ? L10N[lang][key] : L10N.en[key];
     return typeof v === 'function' ? v(...args) : v;
@@ -793,11 +1029,11 @@
     const m = [];
     if (plug === 'TS') {
       m.push({ c: c1, p: 'T' }, { c: 'G', p: 'S' });
-      if (c2) m.push({ c: c2, p: 'S', note: () => t('noteTs', cName(c2)) });
+      if (c2) m.push({ c: c2, p: 'S', note: () => t('noteTs', cName(c2)), why: 'noteTs' });
     } else if (plug === 'TRS') {
       m.push({ c: c1, p: 'T' }, { c: 'G', p: 'S' });
       if (c2) m.push({ c: c2, p: 'R' });
-      else m.push({ c: 'G', p: 'R', note: () => t('noteTrs') });
+      else m.push({ c: 'G', p: 'R', note: () => t('noteTrs'), why: 'noteTrs' });
     } else {
       m.push({ c: 'G', p: '1' });
       if (pt === 'bm' && pin3hot) m.push({ c: '+', p: '3' }, { c: '-', p: '2' });
@@ -906,7 +1142,7 @@
     const nm = n => nodeName(n, src, dst);
     ['a', 'b'].forEach(e => mates[e].filter(m => m.note).forEach(m => {
       const d = e === 'a' ? src : dst;
-      issues.push({ sev: 'info', msg: t('plugNote', cab.conn[e], d.letter, m.note()) });
+      issues.push({ sev: 'info', why: m.why, msg: t('plugNote', cab.conn[e], d.letter, m.note()) });
     }));
 
     const val = {};
@@ -919,14 +1155,14 @@
         const viaTxt = via.length ? t('via', via.join(', ')) : t('viaJack');
         g.drivers.forEach(d => {
           const who = t('outputOf', src.letter, cName(d.c));
-          issues.push(d.bal ? { sev: 'warn', msg: t('balShort', who, viaTxt) } : { sev: 'fault', msg: t('unbShort', who, viaTxt) });
+          issues.push(d.bal ? { sev: 'warn', why: 'balShort', msg: t('balShort', who, viaTxt) } : { sev: 'fault', why: 'unbShort', msg: t('unbShort', who, viaTxt) });
         });
       } else if (g.srcG) v = { k: 'gnd', v: {} };
       else if (g.drivers.length > 1) {
         let s = {};
         g.drivers.forEach(d => { s = vadd(s, d.vec); });
         v = { k: 'clash', v: vscale(s, 1 / g.drivers.length) };
-        issues.push({ sev: 'fault', msg: t('clash', src.letter, g.drivers.map(d => PORTS[sp].short[d.c]).join(t('and'))) });
+        issues.push({ sev: 'fault', why: 'clash', msg: t('clash', src.letter, g.drivers.map(d => PORTS[sp].short[d.c]).join(t('and'))) });
       } else if (g.drivers.length === 1) v = { k: 'sig', v: g.drivers[0].vec };
       else if (g.dstG) v = { k: 'dgnd', v: null };
       else v = { k: 'open', v: null };
@@ -941,22 +1177,22 @@
       const linked = gG.srcG;
       const bal = dp === 'bm';
       if (!linked) {
-        if (gG.drivers.length) issues.push({ sev: 'fault', msg: t('gndToSig', dst.letter, src.letter) });
-        else if (bal) issues.push({ sev: 'warn', msg: t('noShield', src.letter, dst.letter) });
-        else issues.push({ sev: 'fault', msg: t('noGround', src.letter, dst.letter) });
+        if (gG.drivers.length) issues.push({ sev: 'fault', why: 'gndToSig', msg: t('gndToSig', dst.letter, src.letter) });
+        else if (bal) issues.push({ sev: 'warn', why: 'noShield', msg: t('noShield', src.letter, dst.letter) });
+        else issues.push({ sev: 'fault', why: 'noGround', msg: t('noGround', src.letter, dst.letter) });
       }
       const floatMsg = (c, r) => groups[r].dstG
-        ? t('floatLocal', dst.letter, cName(c), src.letter)
-        : t('floating', dst.letter, cName(c));
+        ? { why: 'floatLocal', msg: t('floatLocal', dst.letter, cName(c), src.letter) }
+        : { why: 'floating', msg: t('floating', dst.letter, cName(c)) };
       if (bal) {
         const rp = uf.find('b:c:+'), rm = uf.find('b:c:-');
         if (rp === rm) {
           channels.M = {};
-          issues.push({ sev: 'warn', msg: t('hotColdJoined', dst.letter) });
+          issues.push({ sev: 'warn', why: 'hotColdJoined', msg: t('hotColdJoined', dst.letter) });
         } else {
           const vp = groups[rp].val.v, vm = groups[rm].val.v;
-          if (vp == null) issues.push({ sev: 'fault', msg: floatMsg('+', rp) });
-          if (vm == null) issues.push({ sev: 'fault', msg: floatMsg('-', rm) });
+          if (vp == null) issues.push({ sev: 'fault', ...floatMsg('+', rp) });
+          if (vm == null) issues.push({ sev: 'fault', ...floatMsg('-', rm) });
           channels.M = (vp == null || vm == null) ? null : vscale(vsub(vp, vm), 0.5);
         }
       } else {
@@ -965,7 +1201,7 @@
           const r = uf.find('b:c:' + c);
           if (r === rG) { channels[ch] = {}; return; }
           const v = groups[r].val.v;
-          if (v == null) { issues.push({ sev: 'fault', msg: floatMsg(c, r) }); channels[ch] = null; return; }
+          if (v == null) { issues.push({ sev: 'fault', ...floatMsg(c, r) }); channels[ch] = null; return; }
           channels[ch] = linked ? vsub(v, vG || {}) : null;
         });
       }
@@ -1015,7 +1251,7 @@
       });
     }
     S.cables.forEach(c => {
-      if (c.to && inCycle(c)) res.links[c.id].issues.push({ sev: 'fault', msg: t('loop') });
+      if (c.to && inCycle(c)) res.links[c.id].issues.push({ sev: 'fault', why: 'loop', msg: t('loop') });
     });
     return res;
   }
@@ -1024,6 +1260,7 @@
   function check() {
     const q = QUESTIONS[S.q], sim = simulate();
     const fails = [], notes = [];
+    const fail = (msg, why) => fails.push({ msg, why });
     q.links.forEach(L => {
       const a = devByLetter(L.from), b = devByLetter(L.to);
       const cab = S.cables.find(c => c.from === a.id && c.to === b.id);
@@ -1037,16 +1274,17 @@
       if (L.b && cab.conn.b !== L.b) fails.push(t('needAt', L.from, L.to, L.b, L.to, where));
       if (L.cable && cab.type !== L.cable) fails.push(t('needType', L.from, L.to, L.cable));
     });
-    S.cables.forEach(c => sim.links[c.id].issues.filter(i => i.sev === 'fault').forEach(i => fails.push(i.msg)));
+    S.cables.forEach(c => sim.links[c.id].issues.filter(i => i.sev === 'fault').forEach(i => fail(i.msg, i.why)));
     const tg = devByLetter(q.target.dev), ch = sim.inCh[tg.id];
     for (const k in q.target.ch) {
       const want = q.target.ch[k], got = ch ? ch[k] : undefined, chn = t('ch_' + k);
       if (got == null) fails.push(t('chNone', tg.letter, chn, vfmt(want)));
       else if (!proportional(got, want)) fails.push(t('chWrong', tg.letter, chn, vfmt(got), vfmt(want), Object.keys(want).length > 1));
-      else { const db = vdb(got); if (db) notes.push(t('chLevel', tg.letter, chn, db)); }
+      else { const db = vdb(got); if (db) notes.push({ msg: t('chLevel', tg.letter, chn, db), why: tg.in === 'bm' ? 'level' : null }); }
     }
-    S.cables.forEach(c => sim.links[c.id].issues.filter(i => i.sev === 'warn').forEach(i => notes.push(t('warnPrefix') + i.msg)));
-    S.result = { ok: fails.length === 0, fails: [...new Set(fails)], notes };
+    S.cables.forEach(c => sim.links[c.id].issues.filter(i => i.sev === 'warn').forEach(i => notes.push({ msg: t('warnPrefix') + i.msg, why: i.why })));
+    const seen = new Set();
+    S.result = { ok: fails.length === 0, fails: fails.filter(f => !seen.has(f.msg) && seen.add(f.msg)), notes };
   }
 
   // ---------- mutations ----------
@@ -1356,10 +1594,11 @@
     if ('M' in ch) return `<div class="hears">${t('hears', d.letter)} ${one(ch.M)}</div>`;
     return `<div class="hears">${t('hears', d.letter)} L ${one(ch.L)} · R ${one(ch.R)}</div>`;
   }
+  const whyBtn = key => key && WHY[key] ? ` <button class="why" data-why="${key}">${t('why')}</button>` : '';
   function issuesHTML(issues, emptyKey) {
     if (!issues.length) return `<ul class="issues"><li class="ok">${t(emptyKey)}</li></ul>`;
     const order = { fault: 0, warn: 1, info: 2 };
-    return '<ul class="issues">' + [...issues].sort((a, b) => order[a.sev] - order[b.sev]).map(i => `<li class="${i.sev}">${esc(i.msg)}</li>`).join('') + '</ul>';
+    return '<ul class="issues">' + [...issues].sort((a, b) => order[a.sev] - order[b.sev]).map(i => `<li class="${i.sev}">${esc(i.msg)}${whyBtn(i.why)}</li>`).join('') + '</ul>';
   }
   function linkSummary(dst, lr, reveal) {
     let h = '<div class="rep-block">';
@@ -1403,8 +1642,8 @@
     if (S.hint) h += `<div class="hint small">${esc(tx(q.hint))}</div>`;
     const r = S.result;
     if (r) {
-      if (r.ok) h += `<div class="result ok"><b style="color:var(--accent)">${t('correct')}</b> ${esc(tx(q.explain) || '')}${r.notes.length ? '<ul class="small">' + r.notes.map(n => `<li>${esc(n)}</li>`).join('') + '</ul>' : ''}</div>`;
-      else h += `<div class="result bad"><b style="color:var(--fault)">${t('notYet')}</b><ul class="small">${r.fails.map(f => `<li>${esc(f)}</li>`).join('')}</ul></div>`;
+      if (r.ok) h += `<div class="result ok"><b style="color:var(--accent)">${t('correct')}</b> ${esc(tx(q.explain) || '')}${r.notes.length ? '<ul class="small">' + r.notes.map(n => `<li>${esc(n.msg)}${whyBtn(n.why)}</li>`).join('') + '</ul>' : ''}</div>`;
+      else h += `<div class="result bad"><b style="color:var(--fault)">${t('notYet')}</b><ul class="small">${r.fails.map(f => `<li>${esc(f.msg)}${whyBtn(f.why)}</li>`).join('')}</ul></div>`;
     }
     el.innerHTML = h;
   }
@@ -1442,6 +1681,30 @@
     saveSandbox();
   }
 
+  // ---------- "Why?" pop-up ----------
+  const whyDlg = $('#whyDlg');
+  let whyKey = null;
+  function renderWhy() {
+    if (!whyKey || !whyDlg.open) return;
+    $('#whyTitle').textContent = tx(WHY[whyKey].title);
+    $('#whyBody').innerHTML = tx(WHY[whyKey].body);
+    $('#whyClose').textContent = t('close');
+  }
+  function openWhy(key) {
+    if (!WHY[key]) return;
+    whyKey = key;
+    if (!whyDlg.open) whyDlg.showModal();
+    renderWhy();
+    whyDlg.scrollTop = 0;
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('button.why');
+    if (b) { e.stopPropagation(); openWhy(b.dataset.why); }
+  }, true);
+  $('#whyClose').addEventListener('click', () => whyDlg.close());
+  // a click on the dimmed backdrop lands on the dialog element itself
+  whyDlg.addEventListener('click', e => { if (e.target === whyDlg) whyDlg.close(); });
+
   // ---------- events ----------
   document.querySelectorAll('#langSeg button').forEach(b => b.addEventListener('click', () => {
     if (b.dataset.lang === lang) return;
@@ -1449,6 +1712,7 @@
     try { localStorage.setItem(LANG_KEY, lang); } catch (e) { /* storage unavailable */ }
     if (S.result) check();
     render();
+    renderWhy();
   }));
   document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('click', () => {
     const m = b.dataset.mode;
@@ -1697,6 +1961,7 @@
   window.addEventListener('keydown', e => {
     if (e.key === 'Escape' && S.pending) { S.pending = null; render(); }
     if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (whyDlg.open) return;
       const tg = e.target;
       if (tg && (tg.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName))) return;
       const cab = selCable();
