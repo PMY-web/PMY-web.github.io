@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ASP8024 Simulator</title>
+  <link rel="icon" type="image/x-icon" href="../../../favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Roboto+Mono:wght@400;700&family=Noto+Sans+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --bg2: #111111;
+      --panel: rgba(14, 22, 18, 0.95);
+      --line: #1d3f30;
+      --line2: #2c6a4f;
+      --accent: #00ff96;
+      --accent-dim: #00cc77;
+      --text: #e8fff4;
+      --dim: #86a99a;
+      --warn: #ffb347;
+      --fault: #ff4d4d;
+      --cold: #5cb8ff;
+      --yel: #ffd25c;
+      --font: 'Noto Sans Mono', 'Fira Code', 'Roboto Mono', 'DejaVu Sans Mono', Consolas, Monaco, 'Courier New', monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: linear-gradient(45deg, var(--bg) 25%, var(--bg2) 25%, var(--bg2) 50%, var(--bg) 50%, var(--bg) 75%, var(--bg2) 75%, var(--bg2));
+      background-size: 20px 20px;
+      color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.5; min-height: 100vh; overflow-x: hidden;
+    }
+    .wrap { max-width: 1800px; margin: 0 auto; padding: 16px; }
+    button, select, input { font-family: inherit; font-size: 13px; }
+    [hidden] { display: none !important; }
+
+    header.top { display: flex; align-items: center; gap: 16px; margin: 4px 0 14px; }
+    header.top h1 { margin: 0; font-size: 24px; letter-spacing: 3px; text-transform: uppercase; text-shadow: 0 0 10px var(--accent); }
+    header.top .sub { margin: 2px 0 0; color: var(--dim); font-size: 12px; }
+    .back { color: var(--accent); text-decoration: none; font-weight: bold; font-size: 20px; border: 2px solid var(--line2); padding: 4px 12px; border-radius: 4px; }
+    .back:hover { background: var(--accent); color: #000; }
+    .langseg { margin-left: auto; }
+
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+    .toolbar .sp, .pbbar .sp { flex: 1; }
+    .btn { background: transparent; color: var(--accent); border: 1px solid var(--line2); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; letter-spacing: 1px; }
+    .btn:hover { border-color: var(--accent); box-shadow: 0 0 8px rgba(0, 255, 150, 0.35); }
+    .btn.primary { background: var(--accent); color: #000; border-color: var(--accent); }
+    .btn.danger { color: var(--fault); border-color: #5a2626; }
+    .btn.sm { padding: 2px 8px; font-size: 11px; }
+    .btn:disabled { opacity: 0.35; cursor: default; box-shadow: none; }
+    .seg { display: inline-flex; border: 1px solid var(--line2); border-radius: 4px; overflow: hidden; flex-wrap: wrap; }
+    .seg button { background: transparent; color: var(--dim); border: 0; padding: 6px 12px; cursor: pointer; font-weight: bold; border-right: 1px solid var(--line2); }
+    .seg button:last-child { border-right: 0; }
+    .seg button.on { background: var(--accent); color: #000; }
+    .seg button:not(.on):hover { color: var(--accent); }
+    select { background: #0b120f; color: var(--text); border: 1px solid var(--line2); border-radius: 4px; padding: 5px 6px; max-width: 100%; }
+    #exSel { max-width: min(520px, 100%); }
+
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
+    .panel h2 { margin: 0 0 8px; font-size: 14px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); }
+    .muted { color: var(--dim); }
+    .small { font-size: 12px; }
+    .bad { color: var(--fault); }
+
+    /* exercise */
+    .qhead { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; }
+    .qhead h2 { margin: 0; }
+    .qnum { color: var(--dim); font-size: 12px; letter-spacing: 1px; }
+    .badge { color: #000; background: var(--accent); border-radius: 3px; padding: 0 6px; font-size: 12px; font-weight: bold; }
+    .qtext { margin: 6px 0 10px; max-width: 980px; }
+    .qbtns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .hint { border-left: 3px solid var(--cold); padding: 6px 10px; margin: 8px 0; color: #cfe7ff; background: rgba(92, 184, 255, 0.07); word-break: break-all; }
+    .hint code { color: #fff; }
+    .result { margin-top: 10px; padding: 10px 12px; border-radius: 6px; }
+    .result.ok { border: 1px solid var(--accent); background: rgba(0, 255, 150, 0.08); }
+    .result.bad { border: 1px solid var(--fault); background: rgba(255, 77, 77, 0.07); }
+    .issues { list-style: none; margin: 6px 0 0; padding: 0; }
+    .issues li { padding: 3px 0 3px 22px; position: relative; font-size: 12.5px; }
+    .issues li::before { position: absolute; left: 0; top: 3px; font-weight: bold; }
+    .issues li.fault { color: #ffb0b0; }
+    .issues li.fault::before { content: '✖'; color: var(--fault); }
+    .issues li.warn { color: #ffe0b8; }
+    .issues li.warn::before { content: '!'; color: var(--warn); left: 4px; }
+    .issues li.info { color: var(--dim); }
+    .issues li.info::before { content: 'i'; color: var(--cold); left: 4px; }
+    .issues li.ok { color: var(--accent); }
+    .issues li.ok::before { content: '✓'; color: var(--accent); }
+
+    /* layout */
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 12px; align-items: start; }
+    .side { position: sticky; top: 8px; max-height: calc(100vh - 16px); overflow: auto; margin-bottom: 0; }
+    .side h2 { margin-top: 14px; }
+    .side h2:first-child { margin-top: 0; }
+    @media (max-width: 1150px) { .layout { grid-template-columns: minmax(0, 1fr); } .side { position: static; max-height: none; } }
+    .tabs { margin-bottom: 8px; }
+    .view { padding: 10px; }
+
+    /* controls */
+    .sw {
+      background: #101a15; color: var(--dim); border: 1px solid #2a3a33; border-radius: 3px; padding: 1px 3px; cursor: pointer;
+      font-size: 9.5px; font-weight: bold; line-height: 1.4; min-width: 0; letter-spacing: 0.3px;
+    }
+    .sw:hover { color: var(--text); border-color: var(--line2); }
+    .sw.on { background: var(--accent); color: #000; border-color: var(--accent); box-shadow: 0 0 6px rgba(0, 255, 150, 0.5); }
+    .sw.red.on { background: var(--fault); border-color: var(--fault); box-shadow: 0 0 6px rgba(255, 77, 77, 0.6); color: #fff; }
+    .sw.yel.on { background: var(--yel); border-color: var(--yel); box-shadow: 0 0 6px rgba(255, 210, 92, 0.6); }
+    .sw.grn.on { background: #39d98a; }
+    .bx { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; margin: 2px 0; }
+    .bx.v { flex-direction: column; }
+    .kr { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; }
+    .kr.k2 > .kn { width: 36px; }
+    .fdw { display: flex; flex-direction: column; align-items: center; }
+    .fv { font-size: 9px; color: #e6e6e6; }
+    .frow { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .frow.master { flex-direction: row; align-items: flex-start; justify-content: center; gap: 4px; }
+    .mt { display: block; position: relative; height: 11px; width: 100%; min-width: 36px; background: #06100b; border: 1px solid var(--line); border-radius: 2px; cursor: pointer; overflow: hidden; }
+    .mt b { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--accent); opacity: 0.85; }
+    .mt b.warm { background: var(--yel); }
+    .mt b.hot { background: var(--fault); }
+    .mt b.low { background: #2c8a62; }
+    .mt em { position: absolute; left: 2px; top: -1px; font-size: 8px; font-style: normal; color: var(--dim); z-index: 1; }
+    .mt s { position: absolute; right: 2px; top: -1px; font-size: 8px; text-decoration: none; color: #fff; z-index: 1; text-shadow: 0 0 2px #000; }
+    .mt:hover { border-color: var(--accent); }
+    .lab { font-size: 9px; color: var(--dim); text-align: center; letter-spacing: 1px; margin-top: 4px; }
+
+    /* faders: cap position comes from --p (0..1) */
+    .fdr { position: relative; width: 44px; height: 120px; cursor: ns-resize; touch-action: none; user-select: none; --p: 0.75; }
+    .fdw.long .fdr { height: 210px; }
+    .fdr .slot { position: absolute; left: 27px; top: 10px; bottom: 10px; width: 4px; background: #050505; border-radius: 2px; box-shadow: 0 0 0 1px #3d4248; }
+    .fdr .cap {
+      position: absolute; left: 16px; width: 26px; height: 24px; top: calc((1 - var(--p)) * (100% - 24px));
+      background: repeating-linear-gradient(#e2e4e6 0 2px, #9da1a5 2px 4px); border: 1px solid #4a4d50; border-radius: 2px;
+      box-shadow: 0 3px 5px rgba(0, 0, 0, 0.7);
+    }
+    .fdr .cap::after { content: ''; position: absolute; left: 0; right: 0; top: 10px; height: 2px; background: #111; }
+    .fdr.moved .cap { border-color: #ffd25c; }
+    .fdr .ticks span { position: absolute; left: 0; width: 12px; transform: translateY(-50%); font-size: 7px; color: #cfd3d6; text-align: right; line-height: 1; }
+    .fdr .ticks span::after { content: ''; position: absolute; left: 13px; top: 50%; width: 3px; height: 1px; background: #8a8f94; }
+
+    /* vertical LED meters: the coloured scale is the background, <b> covers the unlit part */
+    .vm { display: block; position: relative; width: 6px; min-height: 60px; flex: 0 0 auto; border-radius: 1px; cursor: pointer; overflow: hidden;
+      background: linear-gradient(to top, #22c55e 0 58%, #facc15 58% 80%, #ef4444 80%); }
+    .vm b { position: absolute; left: 0; right: 0; top: 0; height: 100%; background: #2a3036; }
+    .vm::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(to top, transparent 0 3px, #0c0f12 3px 4px); }
+    .vm.vu { width: 9px; }
+    .vm.mst { width: 10px; height: 210px; }
+    .vm:hover { outline: 1px solid #9fe0ff; }
+
+    /* console look */
+    #v-console { background: #16191d; border-color: #2a2f35; }
+    .strips { display: flex; gap: 2px; overflow-x: auto; padding-bottom: 8px; align-items: flex-start; }
+    .strip { flex: 0 0 106px; background: linear-gradient(90deg, #252a30, #2e343a 50%, #252a30); border: 1px solid #08090a; border-radius: 3px; display: flex; flex-direction: column; color: #e8e8e8; }
+    .strip:nth-child(8n) { margin-right: 6px; }
+    .sec { border-top: 2px solid #0e1114; padding: 6px 6px; display: flex; flex-direction: column; gap: 5px; }
+    .sec h4 { margin: 0 0 2px; font-size: 8px; color: #f0f0f0; letter-spacing: 1px; font-weight: bold; border-bottom: 1px solid #5a6067; padding-bottom: 1px; }
+    .sec.inp { background: #1d2126; }
+    .sec.eq { background: rgba(0, 0, 0, 0.14); }
+    #v-console.no-eq .sec.eq, #v-console.no-aux .sec.aux, #v-console.no-bus .sec.bus { display: none; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 2px; }
+    .row.lft { justify-content: flex-start; gap: 5px; }
+    .row .sp { flex: 1; }
+    .row.kb { padding-right: 1px; }
+    .lbl.l { text-align: left; }
+    .row.inrow { background: #3b4046; border-radius: 2px; padding: 2px 6px; }
+    .row.inlab { margin-top: -3px; padding: 0 5px; }
+    .bcol { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+    .bcol.bot { justify-content: flex-end; gap: 8px; padding-bottom: 6px; }
+    .lbl { font-size: 7.5px; color: #d6d9dc; letter-spacing: 0.3px; line-height: 1.15; text-align: center; white-space: nowrap; }
+    .band { font-size: 12px; font-weight: bold; color: #f2f2f2; letter-spacing: 1px; }
+    .sym { font-size: 10px; color: #ddd; letter-spacing: -1px; }
+    .lblbox { display: flex; border: 1px solid #8a9096; border-radius: 2px; }
+    .lblbox span { flex: 1; text-align: center; font-size: 8px; padding: 1px 0; color: #cfd3d6; }
+    .lblbox span + span { border-left: 1px solid #8a9096; }
+    .lblbox.ml span.on { background: #e8e8e8; color: #111; }
+    .snum { text-align: center; font-weight: bold; color: #f2f2f2; font-size: 12px; }
+    .snum.big { font-size: 16px; line-height: 1.1; }
+    .vurow { display: flex; gap: 3px; align-items: stretch; height: 140px; padding: 4px; background: #0c0f12; border-radius: 2px; border: 1px solid #000; }
+    .vurow .vm { min-height: 0; }
+    .vusc { display: flex; flex-direction: column; justify-content: space-between; font-size: 7px; color: #cfd3d6; line-height: 1; }
+    .vusc .over { color: #ff4a4a; }
+    .vuaux { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; flex: 1; }
+    .ledbox { border: 1px solid #8a9096; border-radius: 4px; padding: 3px 4px 4px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+    .ledbox .ovr { font-size: 7.5px; color: #7a2a2a; font-weight: bold; align-self: center; letter-spacing: 0.5px; }
+    .ledbox.over .ovr { color: #ff3b3b; text-shadow: 0 0 5px #ff3b3b; }
+    .ledbox .lr { display: flex; align-items: center; gap: 3px; font-size: 7px; color: #cfd3d6; }
+    .ledbox i { width: 8px; height: 8px; border-radius: 50%; background: #3a3f44; display: block; box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.6); }
+    .ledbox.vu0 .l0 { background: #ffd84a; box-shadow: 0 0 5px #ffd84a; }
+    .ledbox.sig .ls { background: #2ee66e; box-shadow: 0 0 5px #2ee66e; }
+
+    /* square keys like the desk; lit when pressed */
+    #v-console .sw { background: linear-gradient(#858b91, #5c6167); border: 1px solid #16181b; color: #111; border-radius: 2px; font-size: 8px; padding: 1px 4px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25); }
+    #v-console .sw.sq { width: 15px; height: 13px; padding: 0; flex: 0 0 auto; }
+    #v-console .sw.sq.red { background: linear-gradient(#c84444, #8a2626); }
+    #v-console .sw:hover { border-color: #d0d4d8; }
+    #v-console .sw.on { background: #fbfbf4; color: #111; border-color: #fff; box-shadow: 0 0 7px rgba(255, 255, 235, 0.85); }
+    #v-console .sw.red.on { background: #ff3b3b; color: #fff; box-shadow: 0 0 9px #ff3b3b; }
+    #v-console .sw.yel.on { background: #ffd84a; box-shadow: 0 0 9px #ffd84a; }
+    #v-console .sw.org.on, #v-console .sw.grn.on { background: #ffab4a; box-shadow: 0 0 9px #ffab4a; }
+    #v-console .sw.key { width: 34px; height: 22px; padding: 0; font-size: 7.5px; font-weight: bold; background: linear-gradient(#f2f2f2, #c3c6c9); color: #222; border-color: #000; }
+    #v-console .sw.key.red.on { background: #ff3b3b; color: #fff; }
+    #v-console .sw.key.yel.on { background: #ffd84a; color: #111; }
+    .busgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px 2px; width: 100%; }
+    .busgrid.b2 { grid-template-columns: repeat(3, 1fr); }
+    .busb { display: flex; flex-direction: column; align-items: center; }
+    .bn { display: flex; flex-direction: column; align-items: center; }
+    .bn i { font-style: normal; font-size: 7.5px; line-height: 1.15; color: #8d9399; }
+    .bn i + i { border: 1px solid #6a7076; padding: 0 2px; border-radius: 1px; }
+    .bn i.on { color: #fff; font-weight: bold; }
+    .auxrow { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3b4046; padding-bottom: 2px; }
+    .auxrow.cue { border-bottom: 0; }
+    .kcol { display: flex; flex-direction: column; gap: 1px; }
+    .cuelab { font-size: 8px; text-align: center; color: #d6d9dc; letter-spacing: 1px; }
+    .srcind { display: flex; flex-direction: column; align-items: flex-end; }
+    .srcind span { font-size: 7.5px; color: #5e646a; line-height: 1.2; }
+    .srcind span.on { color: #ff6b6b; font-weight: bold; }
+    .scrib { width: 100%; height: 22px; background: #d9dde0; border: 1px solid #777; border-radius: 3px; font-size: 10px; text-align: center; color: #111; font-family: inherit; padding: 0 2px; margin: 2px 0; }
+    .scrib:focus { outline: 2px solid #ffab4a; }
+    .frow2 { display: flex; gap: 2px; align-items: stretch; justify-content: center; }
+    .frow2 .vm { min-height: 0; margin: 10px 0; }
+
+    /* knobs: coloured caps on a silver skirt */
+    .kn { display: flex; flex-direction: column; align-items: center; width: 40px; cursor: ns-resize; user-select: none; touch-action: none; margin: 1px 0; }
+    .strip .kn { width: auto; min-width: 28px; }
+    .dial { width: 24px; height: 24px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #4a4f55, #121518); border: 2px solid #a3a9af; position: relative; --a: -135deg; box-shadow: 0 2px 3px rgba(0, 0, 0, 0.6); }
+    .dial i { position: absolute; left: 50%; top: 6%; width: 2px; height: 44%; margin-left: -1px; background: #fff; border-radius: 1px; transform-origin: 50% 100%; transform: rotate(var(--a)); }
+    .kn.sm .dial { width: 19px; height: 19px; }
+    .kn.md .dial { width: 28px; height: 28px; }
+    .kn.lg .dial { width: 32px; height: 32px; }
+    .kn.blue .dial { background: radial-gradient(circle at 35% 30%, #63a6ff, #0b3f91); }
+    .kn.red .dial { background: radial-gradient(circle at 35% 30%, #e86a97, #7a1238); }
+    .kn.black .dial { background: radial-gradient(circle at 35% 30%, #4f555b, #0a0c0e); }
+    .kn.moved .dial { border-color: #ffd25c; }
+    .kl { font-size: 8px; color: var(--dim); white-space: nowrap; line-height: 1.2; }
+    .kv { font-size: 8px; color: var(--text); white-space: nowrap; line-height: 1.2; }
+    #v-console .kl { color: #d6d9dc; font-size: 7.5px; }
+    #v-console .kv { color: #9fd8ff; font-size: 7.5px; }
+
+    /* centre section */
+    .pbbar label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+    .pbbar input[type=checkbox] { accent-color: var(--accent); }
+    .center { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; margin-top: 10px; }
+    .blk { background: linear-gradient(#2a2f35, #24292e); border: 1px solid #08090a; border-radius: 4px; padding: 8px; color: #e8e8e8; }
+    .blk.wide { grid-column: 1 / -1; }
+    .blk h3 { margin: 0 0 6px; font-size: 11px; color: #f2f2f2; letter-spacing: 1.5px; font-weight: bold; border-bottom: 1px solid #5a6067; padding-bottom: 2px; }
+    .blk .bx .sw { font-size: 9px; padding: 3px 6px; }
+    .blk .lab { color: #c9cdd1; }
+    .kgrid { display: flex; flex-wrap: wrap; gap: 4px; }
+    .kc { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 46px; }
+    .minis { display: flex; flex-wrap: wrap; gap: 4px; }
+    .mini { width: 60px; display: flex; flex-direction: column; align-items: center; gap: 2px; border: 1px solid #3b4046; border-radius: 3px; padding: 3px; }
+    .mini.efxm { width: 110px; }
+    .oscf { font-size: 11px; color: var(--yel); margin-left: 6px; align-self: center; }
+
+    /* patchbay */
+    .pbbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; font-size: 12px; color: var(--dim); }
+    #pbMsg.bad { color: var(--fault); }
+    .pbscroll { overflow: auto; max-height: 78vh; border: 1px solid var(--line); border-radius: 6px; background: #0b0f0d; }
+    #pb { position: relative; width: max-content; padding: 10px 14px 40px; }
+    .pbrow { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+    .pbrow.wrap { flex-wrap: wrap; max-width: 1900px; }
+    .pbh { width: 100%; margin: 0; font-size: 12px; color: var(--accent); letter-spacing: 2px; }
+    .pblk { background: #121a16; border: 1px solid #3b3220; border-radius: 4px; padding: 4px 6px; }
+    .pblk h5 { margin: 0 0 4px; font-size: 10px; color: #e0c48a; letter-spacing: 1px; font-weight: normal; display: flex; justify-content: space-between; gap: 10px; }
+    .pcol { display: flex; flex-wrap: wrap; gap: 8px; width: 760px; align-content: flex-start; }
+    .cells { display: flex; flex-wrap: wrap; gap: 4px; }
+    .cell { border: 1px solid #2b2a20; border-radius: 3px; padding: 2px; background: #171d19; display: flex; flex-direction: column; align-items: center; }
+    .cell .num { font-size: 10px; color: var(--dim); }
+    .r { display: flex; gap: 2px; }
+    .prow { display: flex; align-items: center; gap: 4px; margin-bottom: 3px; }
+    .grp { display: flex; gap: 2px; padding: 2px; border-radius: 3px; background: #171d19; }
+    .pnum { font-size: 10px; color: var(--dim); width: 16px; text-align: center; }
+    .jk { display: inline-flex; flex-direction: column; align-items: center; width: 46px; cursor: pointer; user-select: none; touch-action: none; }
+    .jk i { width: 15px; height: 15px; border-radius: 50%; border: 2px solid #6b7a73; background: #050806; display: block; transition: box-shadow 0.15s; }
+    .jk em { font-style: normal; font-size: 8.5px; color: #cfd8d3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46px; padding: 0 2px; border-radius: 2px; margin-top: 1px; }
+    .jk.r-src em::before { content: '▲'; color: #39d98a; font-size: 7px; margin-right: 1px; }
+    .jk.r-dst em::before { content: '▼'; color: #e0c48a; font-size: 7px; margin-right: 1px; }
+    .jk.daw em { background: #5b3a7a; }
+    .jk.ks em { background: #234b9a; }
+    .jk.sig i { border-color: var(--accent); box-shadow: 0 0 6px rgba(0, 255, 150, 0.7); }
+    .jk.used i { background: #2b2b2b; }
+    .jk:hover i { border-color: #fff; }
+    .jk.pend i { background: #fff; box-shadow: 0 0 10px #fff; }
+    .jk.drop i { background: var(--accent); transform: scale(1.3); }
+    .jk.insp em { outline: 1px solid var(--cold); }
+    .pblk.tie.xlr { border-color: #1e5b8a; } .pblk.tie.xlr h5 { color: #7cc4ff; }
+    .pblk.tie.trs { border-color: #3448b0; } .pblk.tie.trs h5 { color: #9aa8ff; }
+    .pblk.tie.pre { border-color: #4f7f2a; } .pblk.tie.pre h5 { color: #a6e07a; }
+    .pblk.tie.ob h5 { color: #e0c48a; }
+    .pblk.tie.ha { border-color: #1d8a8a; } .pblk.tie.ha h5 { color: #66f0f0; }
+    .pblk.tie.spare h5 { color: #777; }
+    svg.cables { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
+    svg.cables .hit { fill: none; stroke: transparent; stroke-width: 9; pointer-events: stroke; cursor: pointer; }
+    svg.cables .wire { fill: none; stroke-width: 3.5; opacity: 0.85; stroke-linecap: round; }
+    svg.cables g.sel .wire { stroke-width: 6; opacity: 1; filter: drop-shadow(0 0 4px #fff); }
+    svg.cables g circle { pointer-events: none; }
+    svg.cables .drag { fill: none; stroke: #fff; stroke-width: 3; stroke-dasharray: 7 5; }
+
+    /* rooms & rack */
+    .rooms { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 8px; margin-bottom: 14px; }
+    .room, .unit { background: #0d1612; border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
+    .room h3, .unit h3, h3.sub { margin: 0 0 4px; font-size: 13px; color: var(--accent); letter-spacing: 1.5px; }
+    .room h5 { margin: 6px 0 3px; font-size: 10.5px; color: var(--dim); font-weight: normal; letter-spacing: 0.5px; }
+    .pts { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 8px; }
+    .pt { display: flex; align-items: center; gap: 4px; font-size: 10.5px; }
+    .pt span { flex: 0 0 auto; min-width: 82px; color: #cfd8d3; }
+    .pt select { flex: 1; min-width: 0; padding: 1px 2px; font-size: 11px; }
+    .led { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%; background: #1d2a24; }
+    .led.on { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+    .led.dead { background: var(--fault); }
+    .rack { display: flex; flex-wrap: wrap; gap: 8px; }
+    .uch { display: flex; gap: 6px; }
+    .uc { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 52px; }
+
+    /* daw */
+    .tblwrap { overflow-x: auto; }
+    table.dawt { border-collapse: collapse; width: 100%; font-size: 12px; }
+    .dawt th, .dawt td { border-bottom: 1px solid var(--line); padding: 4px 6px; text-align: left; vertical-align: top; }
+    .dawt th { color: var(--dim); font-weight: normal; }
+    .dawt td.tn { color: var(--accent); font-weight: bold; }
+    .dawt .mt { max-width: 160px; }
+    .dawt .sum { font-size: 11.5px; margin-top: 2px; }
+    .dctl { white-space: nowrap; }
+    .dctl select { font-size: 11px; padding: 2px; }
+    .sw.rec { font-size: 13px; padding: 2px 8px; }
+
+    /* side */
+    .hi { border: 1px solid var(--line); border-radius: 5px; padding: 4px 8px; margin-bottom: 4px; cursor: pointer; }
+    .hi:hover, .hi.on { border-color: var(--accent); }
+    .hi.silent { opacity: 0.55; }
+    .ht { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
+    .ht b { color: var(--text); font-weight: bold; }
+    .hs { font-size: 11.5px; color: var(--dim); }
+    .lv { font-size: 11px; color: var(--accent); white-space: nowrap; }
+    .lv.warm { color: var(--yel); } .lv.hot { color: var(--fault); } .lv.low { color: #3fae7f; }
+    .ih { font-weight: bold; color: #fff; margin-bottom: 4px; }
+    #insp h4 { margin: 8px 0 2px; font-size: 11px; color: var(--dim); font-weight: normal; letter-spacing: 1px; text-transform: uppercase; }
+    ul.comps { list-style: none; padding: 0; margin: 4px 0; }
+    ul.comps li { border-left: 2px solid var(--line2); padding: 2px 0 2px 8px; margin-bottom: 6px; }
+    .cs { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; font-size: 12px; }
+    .pol { color: var(--warn); font-size: 11px; }
+    .route { font-size: 10.5px; color: var(--dim); line-height: 1.7; }
+    .route .pt { background: #14211b; border-radius: 2px; padding: 0 3px; color: #b9cfc5; white-space: nowrap; }
+    .route .pt.proc { background: #3a2f12; color: var(--yel); }
+    .route .pc { color: var(--cold); }
+    .route .ar { color: #4a6a5c; margin: 0 2px; }
+
+    details.help summary { cursor: pointer; color: var(--accent); font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+    details.help h3 { color: var(--accent); font-size: 13px; margin: 16px 0 4px; }
+    details.help ul { margin: 4px 0; padding-left: 20px; }
+    details.help li { margin: 2px 0; font-size: 13px; }
+    html[lang="tr"] .lang-en, html[lang="en"] .lang-tr { display: none; }
+    kbd { border: 1px solid var(--line2); border-radius: 3px; padding: 0 4px; font-family: inherit; }
+
+    /* work-in-progress lock */
+    .gate { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .gate form { width: min(360px, 100%); text-align: center; }
+    .gate h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: 3px; text-shadow: 0 0 10px var(--accent); }
+    .gate input { width: 100%; margin: 10px 0; padding: 8px 10px; font-size: 18px; letter-spacing: 6px; text-align: center; background: #0b120f; color: var(--text); border: 1px solid var(--line2); border-radius: 4px; }
+    .gate .err { color: var(--fault); min-height: 1.5em; margin: 6px 0 0; font-size: 13px; }
+    .gate .row2 { display: flex; gap: 8px; justify-content: center; }
+  </style>
+</head>
+<body>
+<div class="gate" id="gate" hidden>
+  <form class="panel" id="gateForm" onsubmit="return false">
+    <h1>ASP8024</h1>
+    <p class="muted small" id="gateMsg"></p>
+    <input id="gatePin" type="password" inputmode="numeric" autocomplete="off" aria-label="PIN">
+    <div class="row2"><a class="btn" href="../SADB2.html">↵</a><button class="btn primary" type="submit">OK</button></div>
+    <p class="err" id="gateErr"></p>
+  </form>
+</div>
+<div class="wrap" id="app" hidden>
+  <header class="top">
+    <a class="back" href="../SADB2.html" id="backLink">↵</a>
+    <div>
+      <h1 data-t="ui.title">ASP8024</h1>
+      <p class="sub" data-t="ui.sub"></p>
+    </div>
+    <div class="seg langseg" id="langSeg" aria-label="Language / Dil">
+      <button data-lang="en">EN</button>
+      <button data-lang="tr">TR</button>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="seg" id="modeSeg">
+      <button data-mode="sandbox" data-t="mode.sandbox"></button>
+      <button data-mode="ex" data-t="mode.ex"></button>
+    </div>
+    <select id="exSel" hidden aria-label="Exercise"></select>
+    <span class="sp"></span>
+    <button class="btn" id="exportBtn" data-t="btn.export"></button>
+    <button class="btn" id="importBtn" data-t="btn.import"></button>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
+    <button class="btn danger" id="resetBtn" data-t="btn.reset"></button>
+  </div>
+
+  <section class="panel" id="exPanel" hidden></section>
+
+  <div class="layout">
+    <main>
+      <div class="seg tabs" id="viewSeg">
+        <button data-view="console" data-t="view.console"></button>
+        <button data-view="patch" data-t="view.patch"></button>
+        <button data-view="rooms" data-t="view.rooms"></button>
+        <button data-view="daw" data-t="view.daw"></button>
+      </div>
+      <section class="view panel" id="v-console">
+        <div class="pbbar"><span data-t="con.show"></span>
+          <label><input type="checkbox" data-sec="eq" checked> EQ</label>
+          <label><input type="checkbox" data-sec="aux" checked> AUX / CUE</label>
+          <label><input type="checkbox" data-sec="bus" checked> BUS</label>
+        </div>
+        <div id="strips" class="strips"></div>
+        <div id="center" class="center"></div>
+      </section>
+      <section class="view panel" id="v-patch" hidden>
+        <div class="pbbar"><span id="pbMsg"></span><span class="sp"></span><span id="pbCount"></span><button id="clearCablesBtn" class="btn sm danger" data-t="btn.clearCables"></button></div>
+        <div class="pbscroll"><div id="pb"></div></div>
+      </section>
+      <section class="view panel" id="v-rooms" hidden>
+        <p class="muted small" data-t="rooms.hint"></p>
+        <div id="rooms" class="rooms"></div>
+        <h3 class="sub" data-t="ob.title"></h3>
+        <p class="muted small" data-t="ob.hint"></p>
+        <div id="rack" class="rack"></div>
+      </section>
+      <section class="view panel" id="v-daw" hidden><div id="daw"></div></section>
+    </main>
+    <aside class="panel side">
+      <h2 data-t="side.warn"></h2>
+      <ul class="issues" id="warnList"></ul>
+      <h2 data-t="side.insp"></h2>
+      <div id="insp"></div>
+      <h2 data-t="side.hears"></h2>
+      <div id="hears"></div>
+    </aside>
+  </div>
+
+  <details class="panel help">
+    <summary data-t="about.title"></summary>
+    <div class="lang-tr">
+      <h3>Kullanım</h3>
+      <ul>
+        <li><b>Konsol</b>: 24 kanal + merkez bölüm. Butonlara tıkla; knob ve fader'ları yukarı/aşağı sürükle (<kbd>Shift</kbd> ile hassas). Fare tekerleği değer değiştirmez, sadece sayfayı kaydırır. Çift tıklamak varsayılana (fader'da 0 dB) döndürür. Kanal adını fader üstündeki şeride yazabilirsin.</li>
+        <li><b>Patchbay</b>: stüdyodaki patchbay yerleşimi. Jaktan jaka sürükle ya da iki jaka sırayla tıkla. Yeşil parlayan jakta sinyal var. Kabloya tıkla, <kbd>Delete</kbd> ile çıkar.</li>
+        <li><b>Odalar & Outboard</b>: mikrofonları/synth'i/hoparlörü odalardaki noktalara tak; outboard preamp gain ve 48V ayarları.</li>
+        <li><b>DAW</b>: ses kartının 24 girişi. ● REC girişteki sinyali kaydeder; kayıt DAW Out → TAPE IN üzerinden geri çalar. Hazır kayıt da yükleyebilirsin.</li>
+        <li>Sağ panel: uyarılar, tıkladığın noktadaki sinyaller (kaynak, seviye, izlediği yol) ve kimin ne duyduğu. Herhangi bir metreye tıklayarak da inceleyebilirsin.</li>
+        <li>Seviyeler yaklaşık dBu değerleridir. 0 dBFS = +18 dBu kabul edilmiştir. Kondenser -42, dinamik -54, ribbon -60 dBu, synth +4 dBu verir.</li>
+      </ul>
+      <h3>Varsayımlar (kılavuzda belirsiz noktalar)</h3>
+      <ul>
+        <li>KS01/02/03 mic box 1–8, sırasıyla 1–8 / 9–16 / 17–24 kanallarının mic girişlerine doğrudan bağlıdır. Line box lejantında üç kez "KS01" yazıyor; KS01/02/03 olarak yorumlandı.</li>
+        <li>Varsayılan: MIC/LINE → Short Fader, DAW/TR → Long Fader. CH FLIP yer değiştirir. COPY LF, Short Fader'a post-fader Long Fader sinyalini verir.</li>
+        <li>EQ, SHORT FADER butonu basılı değilse Long Fader yolundadır. EQ knob'ları burada seviyeyi değiştirmez; sinyale yalnızca "EQ'dan geçti" bilgisi eklenir.</li>
+        <li>Multitrack bus'a varsayılan olarak post-fader Short Fader gider (LONG F. butonu Long Fader'a çevirir). Subgroup 1–8, multitrack bus 1–8'den beslenir ve insert noktaları hep devrededir.</li>
+        <li>Aux/Cue send'ler varsayılan olarak post-fader Long Fader'dan alınır. Her send çiftinin (1-2, 3-4, 5-6, Cue A-B) kendi SF ve PRE butonları vardır; aux çiftlerindeki üçüncü buton o çifti 7-8 / 9-10 / 11-12'ye kaydırır. Cue A ve Cue B mono bus'lardır.</li>
+        <li>Kanal insert SEND jakı her zaman canlıdır (half-normal); RET ancak INS butonu basılıysa kullanılır.</li>
+        <li>Mix insert SEND Heritage kartından sonra, RET bus compressor'dan hemen önce. MIX L/R send'leri master fader sonrasıdır.</li>
+        <li>C/ROOM kaynağı: kontrol odası kaynak seçimi + solo + mono sonrası, DIM/CUT/seviye öncesi. Artist foldback SOLO, o foldback'i kontrol odası monitörlerine verir.</li>
+        <li>Ext input 1–3, Stereo EFX device, subgroup device, aux/cue arka çıkışları ve mix output'ların arkasında cihaz yok.</li>
+        <li>Outboard üniteleri patchbay haritasındaki gibi 4 bağımsız kanal kabul edildi; Manley EQ, Vari-Mu ve TLC-2 seviyeyi değiştirmeyen işlem aşamaları olarak modellendi.</li>
+        <li>Level converter: +4 jakı giriş, -10 jakı çıkış, pasif -12 dB.</li>
+        <li>AUX LINK, BUS LINK (DFA), METER FLIP, LOW BUMP / HIGH LIFT duyulur bir etki yaratmaz. DAW'da yazılım monitörlemesi yoktur. 69–74 ve 117–124 boş jaklardır.</li>
+      </ul>
+    </div>
+    <div class="lang-en">
+      <h3>How to use</h3>
+      <ul>
+        <li><b>Console</b>: 24 channels plus the centre section. Click buttons; drag knobs and faders up/down (<kbd>Shift</kbd> for fine). The mouse wheel never changes values; it only scrolls. Double-click resets (0 dB on faders). Type a channel name on the scribble strip above the long fader.</li>
+        <li><b>Patchbay</b>: the studio's patchbay layout. Drag from jack to jack, or click two jacks in turn. A green glow means signal. Click a cable and press <kbd>Delete</kbd> to pull it.</li>
+        <li><b>Rooms & Outboard</b>: plug mics, a synth or a speaker into the room points; set outboard preamp gain and 48V.</li>
+        <li><b>DAW</b>: the interface's 24 inputs. ● REC records the input; the take plays back through DAW Out → TAPE IN. You can also load a ready-made take.</li>
+        <li>Right panel: warnings, the signals at whatever you clicked (source, level, route), and who hears what. Click any meter to inspect it too.</li>
+        <li>Levels are rough dBu values. 0 dBFS = +18 dBu. Condenser -42, dynamic -54, ribbon -60 dBu; synth +4 dBu.</li>
+      </ul>
+      <h3>Assumptions (where the guide is unclear)</h3>
+      <ul>
+        <li>KS01/02/03 mic boxes 1–8 are hard-wired to the mic inputs of channels 1–8 / 9–16 / 17–24. The line-box legend says "KS01" three times; read as KS01/02/03.</li>
+        <li>Default: MIC/LINE → Short Fader, DAW/TR → Long Fader. CH FLIP swaps them. COPY LF feeds the post-fader Long Fader signal to the Short Fader.</li>
+        <li>The EQ sits in the Long Fader path unless its SHORT FADER button is pressed. EQ knobs do not change level here; the signal is only marked as "through EQ".</li>
+        <li>Multitrack buses take the post-fader Short Fader by default (LONG F. switches to Long Fader). Subgroups 1–8 are fed from multitrack buses 1–8 and their inserts are always in circuit.</li>
+        <li>Aux/Cue sends come from the post-fader Long Fader by default. Each send pair (1-2, 3-4, 5-6, Cue A-B) has its own SF and PRE buttons; the third button on an aux pair shifts it to 7-8 / 9-10 / 11-12. Cue A and Cue B are mono buses.</li>
+        <li>Channel insert SEND jacks are always live (half-normal); RET is used only while INS is pressed.</li>
+        <li>Mix insert SEND is after the Heritage card, RET just before the bus compressor. MIX L/R sends are after the master fader.</li>
+        <li>C/ROOM source: control-room source select + solo + mono, before DIM/CUT/level. Artist foldback SOLO puts that foldback on the control-room monitors.</li>
+        <li>Ext inputs 1–3, Stereo EFX device, subgroup device, aux/cue rear outputs and mix outputs have nothing connected behind them.</li>
+        <li>Outboard units have 4 independent channels, as on the patchbay map; Manley EQ, Vari-Mu and TLC-2 are unity-gain processing stages.</li>
+        <li>Level converters: +4 jack is the input, -10 jack the output, passive -12 dB.</li>
+        <li>AUX LINK, BUS LINK (DFA), METER FLIP, LOW BUMP / HIGH LIFT have no audible effect. No software monitoring in the DAW. Jacks 69–74 and 117–124 are spares.</li>
+      </ul>
+    </div>
+  </details>
+</div>
+<script src="asp-i18n.js"></script>
+<script src="asp-model.js"></script>
+<script src="asp-ui.js"></script>
+<script src="asp-ex.js"></script>
+<script>
+  // Work-in-progress lock. This is a static site, so it only keeps casual visitors out:
+  // the PIN is stored as a salted SHA-256 hash, and an unlocked browser stays unlocked.
+  (function () {
+    const KEY = 'asp8024.unlocked';
+    const HASH = '7ae5aad303662acf460cafea28219d97683b24bc05ebf24cc7408b9b75f33a26';
+    const en = (function () { try { return localStorage.getItem('asp8024.lang') === 'en'; } catch (e) { return false; } })();
+    const $ = id => document.getElementById(id);
+    async function hash(pin) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('asp8024:' + pin));
+      return Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, '0')).join('');
+    }
+    function start() {
+      $('gate').hidden = true;
+      $('app').hidden = false;
+      if (/SADB1|SinyalAkisi1/.test(document.referrer)) $('backLink').href = '../../SinyalAkisi1/SADB1.html';
+      ASP.init();
+    }
+    let unlocked = false;
+    try { unlocked = localStorage.getItem(KEY) === HASH; } catch (e) { /* storage unavailable */ }
+    if (unlocked) { start(); return; }
+    $('gateMsg').textContent = en ? 'This page is a work in progress. Enter the access code.' : 'Bu sayfa hazırlık aşamasında. Erişim kodunu gir.';
+    $('gate').hidden = false;
+    $('gatePin').focus();
+    $('gateForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      let h = '';
+      try { h = await hash($('gatePin').value.trim()); } catch (err) { /* crypto.subtle needs https or localhost */ }
+      if (h !== HASH) {
+        $('gateErr').textContent = en ? 'Wrong code.' : 'Kod hatalı.';
+        $('gatePin').select();
+        return;
+      }
+      try { localStorage.setItem(KEY, HASH); } catch (err) { /* stays unlocked for this visit only */ }
+      start();
+    });
+  })();
+</script>
+</body>
+</html>

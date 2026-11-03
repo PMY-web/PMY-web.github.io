@@ -1,0 +1,116 @@
+/* ASP8024 simulator — UI strings (TR / EN). Console labels stay in English as printed on the desk. */
+(function (A) {
+  'use strict';
+  A.lang = 'tr';
+  A.STR = {
+    'ui.title': { tr: 'ASP8024 Simülatörü', en: 'ASP8024 Simulator' },
+    'ui.sub': { tr: 'Audient ASP8024 Heritage Edition — konsol, patchbay ve stüdyo bağlantıları', en: 'Audient ASP8024 Heritage Edition — console, patchbay and studio wiring' },
+    'mode.sandbox': { tr: 'Serbest çalışma', en: 'Sandbox' },
+    'mode.ex': { tr: 'Alıştırmalar', en: 'Exercises' },
+    'view.console': { tr: 'Konsol', en: 'Console' },
+    'view.patch': { tr: 'Patchbay', en: 'Patchbay' },
+    'view.rooms': { tr: 'Odalar & Outboard', en: 'Rooms & Outboard' },
+    'view.daw': { tr: 'DAW / Ses kartı', en: 'DAW / Interface' },
+    'con.show': { tr: 'Kanal bölümleri:', en: 'Strip sections:' },
+    'btn.reset': { tr: 'Sıfırla', en: 'Reset' },
+    'btn.resetConfirm': { tr: 'Bütün ayarlar ve kablolar başlangıç durumuna dönsün mü?', en: 'Reset every control and cable to the starting state?' },
+    'btn.check': { tr: 'Kontrol et', en: 'Check' },
+    'btn.reveal': { tr: 'Şifreli adımı çöz', en: 'Decode the hidden step' },
+    'btn.rmCable': { tr: 'Kabloyu çıkar', en: 'Remove cable' },
+    'btn.clearCables': { tr: 'Tüm kabloları çıkar', en: 'Remove all cables' },
+    'btn.export': { tr: 'Dışa aktar', en: 'Export' },
+    'btn.import': { tr: 'İçe aktar', en: 'Import' },
+
+    'side.warn': { tr: 'Uyarılar', en: 'Warnings' },
+    'side.none': { tr: 'Belirgin bir sorun yok.', en: 'No obvious problems.' },
+    'side.insp': { tr: 'İnceleme', en: 'Inspector' },
+    'side.inspHint': { tr: 'Patchbay jakına, bir metreye ya da aşağıdaki bir hedefe tıkla: o noktadaki sinyaller ve izledikleri yol burada görünür.', en: 'Click a patchbay jack, a meter or a destination below to see the signals at that point and the route each one took.' },
+    'side.hears': { tr: 'Kim ne duyuyor?', en: 'Who hears what?' },
+    'side.silent': { tr: 'sinyal yok', en: 'no signal' },
+    'side.route': { tr: 'yol', en: 'route' },
+    'side.polarity': { tr: 'polarite ters', en: 'polarity inverted' },
+
+    'h.cr': { tr: 'Kontrol odası', en: 'Control room' },
+    'h.sls': { tr: 'Kayıt odası hoparlörü', en: 'Studio loudspeaker' },
+    'h.ha6': { tr: 'Artist kulaklık — Headamp 6 (Foldback 1)', en: 'Artist headphones — Headamp 6 (Foldback 1)' },
+    'h.ha4': { tr: 'Artist kulaklık — Headamp 4 (Foldback 2)', en: 'Artist headphones — Headamp 4 (Foldback 2)' },
+    'h.daw': { tr: 'DAW girişleri (REC A)', en: 'DAW inputs (REC A)' },
+    'h.other': { tr: 'Diğer çıkışlar', en: 'Other outputs' },
+    'h.roomspk': { tr: 'Odadaki hoparlör', en: 'Speaker in room' },
+
+    'pb.hint': { tr: 'Bir jaktan diğerine sürükle ya da iki jaka sırayla tıkla. Kabloya tıklayıp Delete ile çıkar. Üstteki satırlar çıkış, alttakiler giriş değildir: her jak etiketinde yönü görebilirsin (▲ sinyal verir, ▼ sinyal alır).', en: 'Drag from one jack to another, or click two jacks in turn. Click a cable and press Delete to pull it. ▲ marks a jack that gives signal, ▼ one that takes it.' },
+    'pb.busy': { tr: 'Bu jakta zaten bir kablo var. Önce onu çıkar.', en: 'That jack already has a cable. Pull it first.' },
+    'pb.pending': { tr: 'Kablonun diğer ucu için bir jak seç (Esc: iptal).', en: 'Pick a jack for the other end (Esc cancels).' },
+    'pb.count': { tr: 'Kablo sayısı: {0}', en: 'Cables: {0}' },
+    'pb.full': { tr: 'full normal', en: 'full normal' },
+    'pb.half': { tr: 'half normal', en: 'half normal' },
+    'pb.normTo': { tr: 'Arka panel bağlantısı (normal): {0} → {1} ({2})', en: 'Rear normal: {0} → {1} ({2})' },
+    'pb.broken': { tr: 'kopuk', en: 'broken' },
+    'pb.gives': { tr: 'Bu jaktan çıkan sinyal', en: 'Signal available at this jack' },
+    'pb.gets': { tr: 'Bu jaktan ekipmana giren sinyal', en: 'Signal entering the equipment here' },
+    'pb.cable': { tr: 'Kablo: {0} ↔ {1}', en: 'Cable: {0} ↔ {1}' },
+
+    'rooms.hint': { tr: 'Odalardaki bağlantı noktalarına mikrofon, synth ya da hoparlör tak. KS01–03 mic box\'ları konsolun mic girişlerine doğrudan bağlıdır; line box ve tie line\'lar patchbay\'e gelir.', en: 'Plug mics, a synth or a speaker into the room connection points. KS01–03 mic boxes are wired straight to the console mic inputs; line boxes and tie lines come up on the patchbay.' },
+    'rooms.box': { tr: 'MIC BOX → konsol mic girişi', en: 'MIC BOX → console mic in' },
+    'rooms.line': { tr: 'LINE BOX → patchbay DEV OUT', en: 'LINE BOX → patchbay DEV OUT' },
+    'rooms.xlr': { tr: 'XLR tie line → patchbay', en: 'XLR tie line → patchbay' },
+    'rooms.trs': { tr: 'TRS tie line → patchbay', en: 'TRS tie line → patchbay' },
+    'ob.title': { tr: 'Outboard rack', en: 'Outboard rack' },
+    'ob.hint': { tr: 'Outboard giriş/çıkışları patchbay\'de normalsiz (through) bağlıdır: kullanmak için kablo gerekir.', en: 'Outboard ins and outs are through (non-normalled) on the patchbay: they need cables.' },
+    'ob.in': { tr: 'giriş', en: 'in' },
+    'ob.out': { tr: 'çıkış', en: 'out' },
+
+    'daw.hint': { tr: '24 kanallı ses kartı: Multitrack Bus n → DAW In n. REC, girişteki sinyali o kanala kaydeder; kayıt DAW Out n üzerinden TAPE IN n\'e geri çalınır.', en: '24-channel interface: Multitrack Bus n → DAW In n. REC records whatever is on that input; the take plays back through DAW Out n to TAPE IN n.' },
+    'daw.track': { tr: 'Kanal', en: 'Track' },
+    'daw.input': { tr: 'Giriş (şu an)', en: 'Input (now)' },
+    'daw.content': { tr: 'Kayıtlı materyal (çalıyor)', en: 'Recorded material (playing)' },
+    'daw.rec': { tr: 'REC', en: 'REC' },
+    'daw.clear': { tr: 'Sil', en: 'Clear' },
+    'daw.load': { tr: 'hazır kayıt…', en: 'load a take…' },
+    'daw.recSelf': { tr: 'Kanal {0}: çalınan kayıt aynı kanala geri kaydedilemez.', en: 'Track {0}: you cannot record a track onto itself while it plays.' },
+    'daw.recEmpty': { tr: 'Kanal {0}: girişte sinyal yok.', en: 'Track {0}: nothing on the input.' },
+    'daw.recDone': { tr: 'Kanal {0} kaydedildi.', en: 'Track {0} recorded.' },
+    'daw.recb': { tr: 'REC B (ikinci kayıt cihazı)', en: 'REC B (second recorder)' },
+    'daw.empty': { tr: 'boş', en: 'empty' },
+
+    'w.loop': { tr: 'Geri besleme döngüsü: bir sinyal kendi girişine geri dönüyor. Gerçek sistemde bu, yükselen bir uğultu/ıslık (feedback) demektir.', en: 'Feedback loop: a signal is routed back into its own input. On a real desk this is a howl.' },
+    'w.outout': { tr: 'İki çıkış birbirine bağlı ({0} ↔ {1}). Çıkışlar birbirini sürmeye çalışır; sinyal geçmez, ekipman zarar görebilir.', en: 'Two outputs patched together ({0} ↔ {1}). They fight each other; nothing useful flows and gear can be stressed.' },
+    'w.inin': { tr: 'İki giriş birbirine bağlı ({0} ↔ {1}); kabloda sinyal yok.', en: 'Two inputs patched together ({0} ↔ {1}); the cable carries nothing.' },
+    'w.parshort': { tr: 'Parallels {0}: birden fazla sinyal girilmiş — kısa devre. Paralel bölge bir giriş, üç çıkış olarak kullanılmalı.', en: 'Parallels {0}: more than one signal fed in — short circuit. Use parallels as one input, three outputs.' },
+    'w.nophantom': { tr: '{0}: phantom power (+48V) almıyor, sinyal üretmiyor.', en: '{0} is not getting phantom power (+48V), so it makes no signal.' },
+    'w.ribbon': { tr: '{0}: ribbon mikrofona phantom power gidiyor — mikrofon zarar görebilir.', en: '{0}: phantom power is reaching a ribbon mic — it can be damaged.' },
+    'w.lineinmic': { tr: '{0}: line seviyeli cihaz mic box\'a takılı; preamp kolayca clip eder.', en: '{0}: a line-level device is in a mic box; the preamp will clip easily.' },
+    'w.clip': { tr: '{0}: seviye çok yüksek ({1}) — clip.', en: '{0}: level too hot ({1}) — clipping.' },
+    'w.low': { tr: '{0}: preamp çıkışı çok düşük ({1}). Gain\'i artır ya da doğru girişi (MIC/LINE) seç.', en: '{0}: preamp output very low ({1}). Raise the gain or pick the right input (MIC/LINE).' },
+    'w.dawclip': { tr: 'DAW In {0}: {1} — 0 dBFS (+18 dBu) üstü, dönüştürücü clip ediyor.', en: 'DAW In {0}: {1} — above 0 dBFS (+18 dBu), the converter clips.' },
+    'w.noise': { tr: 'Sinyal taşımayan {0} yolun MIX butonu açık. Hepsi Mix Bus\'a gürültü ekler ve noise floor\'u yükseltir.', en: '{0} MIX button(s) are on for paths that carry no signal. Each adds noise to the Mix Bus and raises the noise floor.' },
+    'w.master': { tr: 'Master fader 0 dB\'de değil. Normal kullanımda maksimumda olmalı; seviye yüksekse Mix Bus\'a giden sinyali azalt.', en: 'Master fader is not at 0 dB. It should normally sit at maximum; if it is too loud, turn down what feeds the Mix Bus.' },
+    'w.osc': { tr: 'Osilatör açık. Kullanılmadığında kapatılmalı.', en: 'Oscillator is on. Switch it off when not in use.' },
+    'w.sip': { tr: 'SOLO IN PLACE aktif: sololanmayan kanallar Mix Bus\'tan kesildi — bu kayda ve çıkışlara da etki eder.', en: 'SOLO IN PLACE is active: unsoloed channels are cut from the Mix Bus — this affects recordings and outputs too.' },
+    'w.slate': { tr: 'Talkback SLATE açık: talkback bütün bus çıkışlarına (ve kayda) gidiyor.', en: 'Talkback SLATE is on: talkback goes to every bus output (and onto the recording).' },
+    'w.insdead': { tr: 'Kanal {0}: {1} INSERT açık ama RET\'ten sinyal gelmiyor — kanal sessiz.', en: 'Channel {0}: {1} INSERT is on but nothing comes back on RET — the channel is silent.' },
+
+    'ex.pick': { tr: 'Alıştırma seç', en: 'Pick an exercise' },
+    'ex.pass': { tr: 'Tamam! Bu alıştırma çözüldü.', en: 'Done! Exercise solved.' },
+    'ex.fail': { tr: 'Henüz değil:', en: 'Not yet:' },
+    'ex.method1': { tr: 'Yöntem 1 kaydedildi. Şimdi aynı sonucu farklı bir yöntemle elde et ve tekrar kontrol et.', en: 'Method 1 saved. Now reach the same result a different way and check again.' },
+    'ex.part1': { tr: 'İlk kısım tamam. Şimdi şifreli adımı çöz ve onu da yap.', en: 'First part done. Now decode the hidden step and do that too.' },
+    'ex.sameMethod': { tr: 'Bu çözüm kaydedilen 1. yöntemle aynı yolu kullanıyor. Farklı bir yöntem dene.', en: 'This uses the same route as your saved method 1. Try a different way.' },
+    'ex.methods': { tr: 'Kaydedilen yöntemler: {0}/{1}', en: 'Methods saved: {0}/{1}' },
+    'ex.solved': { tr: 'çözüldü', en: 'solved' },
+    'ex.decoded': { tr: 'Çözülmüş adım:', en: 'Decoded step:' },
+    'ex.b64': { tr: 'Base64 şifreli adım — önce ilk kısmı tamamla.', en: 'Base64-encoded step — finish the first part first.' },
+    'ex.cablesLeft': { tr: 'Kablo: {0} / en fazla {1}', en: 'Cables: {0} / max {1}' },
+
+    'about.title': { tr: 'Nasıl kullanılır & varsayımlar', en: 'How to use & assumptions' }
+  };
+
+  A.t = function (key) {
+    const e = A.STR[key];
+    let s = e ? (e[A.lang] || e.tr) : key;
+    for (let i = 1; i < arguments.length; i++) s = s.split('{' + (i - 1) + '}').join(arguments[i]);
+    return s;
+  };
+  // pick from an inline {tr, en} object
+  A.L = o => (o && typeof o === 'object') ? (o[A.lang] || o.tr) : (o || '');
+})(window.ASP = window.ASP || {});
