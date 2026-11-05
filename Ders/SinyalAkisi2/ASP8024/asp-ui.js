@@ -48,7 +48,7 @@
     return L(U.S.names[src]) || src;
   }
   A.srcLabel = srcLabel;
-  const OBN = { hv: 'HV-3D', nv: 'Neve 5012', meq: 'Manley EQ', vm: 'Vari-Mu', tlc: 'TLC-2' };
+  const OBN = { hv: 'HV-3D', n73: '1073', meq: 'Massive Passive', vm: 'Vari-Mu', tlc: 'TLC-2' };
   function tagLabel(tg) {
     const [k, a, b] = tg.split(':');
     switch (k) {
@@ -73,12 +73,12 @@
       case 'sls': return 'STUDIO LS';
       case 'fb': return 'FOLDBACK ' + a;
       case 'tb': return 'TALKBACK';
-      case 'play': return 'DAW ▶' + a;
-      case 'rec': return 'DAW ●' + a;
+      case 'play': return 'DAW PLAY ' + a;
+      case 'rec': return 'DAW REC ' + a;
       case 'lc': return 'LEVEL CONV ' + a;
-      case 'ha': return 'HEADAMP ' + a;
+      case 'ha': return 'HA8000 ' + a;
       case 'tie': return a + ' ' + (b[0] === 'x' ? 'XLR' : 'TRS') + ' ' + b.slice(1);
-      case 'lb': return A.roomOfCh(+a) + ' TRS ' + A.boxIdx(+a);
+      case 'lb': return A.linePoint(+a).slice(3).replace(':', ' LINE ');
       case 'par': return 'PARALLELS ' + a;
       case 'pc': return '⇢';
       default: return tg;
@@ -347,15 +347,13 @@
     const h = [];
     // each room lists only its wall connectors, as printed on the boxes; no signal indicators,
     // students find out whether something arrives with the desk's meters and monitoring
-    const pts = (prefix, label, n, allowDst) => '<div class="pts">' + range(1, n).map(k =>
+    const pts = (prefix, label, rg, allowDst) => '<div class="pts">' + range(rg[0], rg[1]).map(k =>
       '<label class="pt"><span>' + label + ' ' + k + '</span>' + ptSelect(prefix + k, allowDst) + '</label>').join('') + '</div>';
     for (const r of A.ROOMS) {
       const g = [];
-      if (r.box) {
-        g.push(pts('mb:' + r.id + ':', 'MIC', 8));
-        g.push(pts('lb:' + r.id + ':', 'LINE', 8));
-      }
       if (r.xlr) g.push(pts('tie:' + r.id + ':x', 'XLR', r.xlr, true));
+      if (r.mic) g.push(pts('mb:' + r.id + ':', 'MIC', r.mic));
+      if (r.line) g.push(pts('lb:' + r.id + ':', 'LINE', r.line));
       if (r.trs) g.push(pts('tie:' + r.id + ':t', 'TRS', r.trs, true));
       h.push('<div class="room"><h3>' + A.roomLabel(r) + '</h3>' + g.join('') + '</div>');
     }
@@ -566,8 +564,8 @@
       if (has || (o === U.S.mon.out && !crShown)) { add(t('h.cr') + ' — ' + outName[o], js, true); crShown = true; }
     }
     add(t('h.sls'), ['spk.slsL', 'spk.slsR'], true);
-    add(t('h.ha6'), ['ha6.L', 'ha6.R'], true);
-    add(t('h.ha4'), ['ha4.L', 'ha4.R'], true);
+    add(t('h.haA'), ['ha8.aL', 'ha8.aR'], true);
+    add(t('h.haB'), ['ha8.bL', 'ha8.bR'], true);
     for (const n of range(1, N)) add('DAW In ' + n, ['daw' + n + '.in']);
     for (const [pt, p] of Object.entries(U.S.plug)) if (A.DEVICES[p.type].kind === 'dst') add(t('h.roomspk') + ' — ' + pointLabel(pt), [pt], true);
     const nMain = items.length;
@@ -805,6 +803,14 @@
       }
     };
     merge(d, s);
+    // drop devices plugged into connectors that no longer exist after a studio rewiring
+    const exists = pt => {
+      if (A.J[pt]) return true;
+      const m = /^(mb|lb):(\w+):(\d+)$/.exec(pt), r = m && A.ROOMS.find(q => q.id === m[2]);
+      const rg = r && r[m[1] === 'mb' ? 'mic' : 'line'];
+      return !!rg && +m[3] >= rg[0] && +m[3] <= rg[1];
+    };
+    for (const pt of Object.keys(d.plug)) if (!exists(pt)) delete d.plug[pt];
     return d;
   };
 

@@ -9,36 +9,9 @@
   const x = (g, c) => MARGIN + g * (BLOCK + GAP) + c * SLOT + SLOT / 2; // jack centre
   const x0 = (g, c) => MARGIN + g * (BLOCK + GAP) + c * SLOT;          // left edge of a slot
 
-  // tie line number -> engine jack id, as wired in the studio (from the studio patchbay map)
-  const TIE = {};
-  const run = (from, ids) => ids.forEach((id, i) => { TIE[from + i] = id; });
-  const ks = (room, kind, a, b) => range(a, b).map(k => 'tie:' + room + ':' + kind + k);
-  run(1, ks('KS01', 'x', 1, 8)); run(9, ks('KS02', 'x', 1, 8)); run(17, ks('KS03', 'x', 1, 8));
-  run(25, ks('KS04', 'x', 1, 16)); run(41, ks('KS04', 't', 1, 8));
-  run(49, range(1, 4).map(i => 'hv.in' + i)); run(53, range(1, 4).map(i => 'nv.in' + i));
-  run(57, range(1, 4).map(i => 'meq.in' + i)); run(61, range(1, 4).map(i => 'vm.in' + i));
-  run(65, range(1, 4).map(i => 'tlc.in' + i)); run(69, range(69, 74).map(i => 'spare' + i));
-  run(75, range(1, 6).map(i => 'ha6.o' + i));
-  run(81, ks('KABIN01', 'x', 1, 6)); run(87, ks('KABIN01', 't', 1, 2));
-  run(89, ks('KABIN02', 'x', 1, 6)); run(95, ks('KABIN02', 't', 1, 2));
-  run(97, range(1, 4).map(i => 'hv.out' + i)); run(101, range(1, 4).map(i => 'nv.out' + i));
-  run(105, range(1, 4).map(i => 'meq.out' + i)); run(109, range(1, 4).map(i => 'vm.out' + i));
-  run(113, range(1, 4).map(i => 'tlc.out' + i)); run(117, range(117, 124).map(i => 'spare' + i));
-  run(125, range(1, 4).map(i => 'ha4.o' + i));
-  run(129, ks('ASMA01', 'x', 1, 8)); run(137, ks('ASMA01', 't', 1, 8));
-  // studio labelling of the tie lines: [first, last, text, colour class]
-  const BANDS = [
-    [1, 8, 'KS01 XLR TIE LINE', 'xlr'], [9, 16, 'KS02 XLR TIE LINE', 'xlr'], [17, 24, 'KS03 XLR TIE LINE', 'xlr'],
-    [25, 40, 'KS04 XLR TIE LINE', 'xlr'], [41, 48, 'KS04 TRS TIE LINE', 'trs'],
-    [49, 52, 'MILLENNIA HV-3D MIC INPUTS', 'pre'], [53, 56, 'RUPERT NEVE 5012 MIC INPUTS', 'pre'],
-    [57, 60, 'MANLEY EQ INPUTS', 'ob'], [61, 64, 'MANLEY VARIABLE MU INPUTS', 'ob'], [65, 68, 'MILLENNIA TLC-2 INPUTS', 'ob'],
-    [69, 74, '', 'spare'], [75, 80, 'HEADAMP 6 OUTPUTS', 'ha'],
-    [81, 86, 'KABIN 01 XLR TIE LINE', 'xlr'], [87, 88, 'TRS LINE', 'trs'], [89, 94, 'KABIN 02 XLR TIE LINE', 'xlr'], [95, 96, 'TRS LINE', 'trs'],
-    [97, 100, 'MILLENNIA HV-3D LINE OUTPUTS', 'ob'], [101, 104, 'RUPERT NEVE 5012 LINE OUTPUTS', 'ob'],
-    [105, 108, 'MANLEY EQ OUTPUTS', 'ob'], [109, 112, 'MANLEY VARIABLE MU OUTPUTS', 'ob'], [113, 116, 'MILLENNIA TLC-2 OUTPUTS', 'ob'],
-    [117, 124, '', 'spare'], [125, 128, 'HEADAMP 4 OUTPUTS', 'ha'],
-    [129, 136, 'ASMA 01 XLR TIE LINE', 'xlr'], [137, 144, 'ASMA 01 TRS TIE LINE', 'trs']
-  ];
+  // tie lines and their studio labels come from the MGÜ patchbay plan table in asp-model.js
+  const TIE = A.TIE;
+  const BANDS = A.TIE_PLAN.map(([a, b, , text, cls]) => [a, b, text, cls]);
 
   const pos = {};
   const h = [];
@@ -171,7 +144,7 @@
     range(1, 4).forEach(i => jack('par2.' + i, R, i - 1, y));
     el('parbr', x(R, 0), y + 15, x(R, 3) - x(R, 0), 7);
     capSpan(R, 0, 4, y + 25, 'PARALLELS', 'ttl0');
-    const sets = [['sls.L', 'spk.slsL', 'sls.R', 'spk.slsR', 'L', 'R'], ['fb1.L', 'ha6.L', 'fb1.R', 'ha6.R', 'FB L', 'FB R'], ['fb2.L', 'ha4.L', 'fb2.R', 'ha4.R', 'FB L', 'FB R']];
+    const sets = [['sls.L', 'spk.slsL', 'sls.R', 'spk.slsR', 'L', 'R'], ['fb1.L', 'ha8.aL', 'fb1.R', 'ha8.aR', 'FB L', 'FB R'], ['fb2.L', 'ha8.bL', 'fb2.R', 'ha8.bR', 'FB L', 'FB R']];
     sets.forEach((s, i) => {
       const c = 4 * (i + 1);
       pill(R, c, 4, y);
@@ -228,7 +201,6 @@
         const tnum = r * 48 + g * 16 + c + 1, id = TIE[tnum];
         if (c % 2 === 0) pill(g, c, 2, TY(r));
         jack(id, g, c, TY(r));
-        A.J[id].tie = tnum;
         el('tbox', x(g, c) - 10, TY(r) + 14, 20, 13, tnum);
       }
     }

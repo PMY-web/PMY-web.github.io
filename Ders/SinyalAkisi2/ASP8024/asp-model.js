@@ -52,28 +52,62 @@
     spk: { kind: 'dst', name: { tr: 'Aktif hoparlör', en: 'Powered speaker' }, short: 'SPK' }
   };
 
-  // KS01-03 have a mic box (XLR, hard-wired to the console mic inputs) and a line box (TRS,
-  // normalled to LINE IN on the patchbay). Every room also has tie lines that appear on the patchbay.
+  // Wall connectors per room, from the MGÜ patchbay plan. "mic" is a mic box hard-wired to console
+  // mic inputs from channel micCh on; "line" is a line box (TRS) hard-wired behind DEV OUT from
+  // channel lineCh on; xlr/trs are tie lines that come up on the patchbay. Ranges are [first, last].
   A.ROOMS = [
-    { id: 'KS01', box: true, ch0: 1, xlr: 8, trs: 0 },
-    { id: 'KS02', box: true, ch0: 9, xlr: 8, trs: 0 },
-    { id: 'KS03', box: true, ch0: 17, xlr: 8, trs: 0 },
-    { id: 'KS04', xlr: 16, trs: 8 },
-    { id: 'KABIN01', label: 'KABİN 01', xlr: 6, trs: 2 },
-    { id: 'KABIN02', label: 'KABİN 02', xlr: 6, trs: 2 },
-    { id: 'ASMA01', label: 'ASMA 01', xlr: 8, trs: 8 }
+    { id: 'KS01', line: [1, 8], lineCh: 9, xlr: [1, 8] },
+    { id: 'KS02', xlr: [1, 8], trs: [1, 8] },
+    { id: 'KS03', mic: [1, 8], micCh: 1, line: [1, 8], lineCh: 1, xlr: [9, 16] },
+    { id: 'KS04', xlr: [1, 16], trs: [1, 8] },
+    { id: 'KABIN01', label: 'KABİN 01', xlr: [1, 4], mic: [5, 6], micCh: 9, trs: [1, 2] },
+    { id: 'KABIN02', label: 'KABİN 02', xlr: [1, 4], mic: [5, 6], micCh: 11, trs: [1, 2] },
+    { id: 'ASMA01', label: 'ASMA 01', xlr: [1, 4], mic: [5, 8], micCh: 13, trs: [1, 6] }
   ];
   A.roomLabel = r => r.label || r.id;
-  A.roomOfCh = n => A.ROOMS[Math.floor((n - 1) / 8)].id;
-  A.boxIdx = n => ((n - 1) % 8) + 1;
+  // room point feeding a channel's mic input / DEV OUT, or null when nothing is hard-wired
+  // (mic inputs 17-24 come up on the patchbay instead)
+  const chPoint = (kind, n) => {
+    for (const r of A.ROOMS) {
+      const rg = r[kind], c0 = r[kind + 'Ch'];
+      if (rg && n >= c0 && n < c0 + rg[1] - rg[0] + 1) return (kind === 'mic' ? 'mb:' : 'lb:') + r.id + ':' + (rg[0] + n - c0);
+    }
+    return null;
+  };
+  A.micPoint = n => chPoint('mic', n);
+  A.linePoint = n => chPoint('line', n);
 
   // ---------------------------------------------------------------- outboard
   A.OUTBOARD = [
-    { id: 'hv', name: 'Millennia HV-3D', kind: 'pre', inLabel: 'MIC INPUTS', outLabel: 'LINE OUTPUTS', ch: 4 },
-    { id: 'nv', name: 'Rupert Neve 5012', kind: 'pre', inLabel: 'MIC INPUTS', outLabel: 'LINE OUTPUTS', ch: 4 },
-    { id: 'meq', name: 'Manley EQ', kind: 'eq', inLabel: 'INPUTS', outLabel: 'OUTPUTS', ch: 4 },
-    { id: 'vm', name: 'Manley Variable Mu', kind: 'comp', inLabel: 'INPUTS', outLabel: 'OUTPUTS', ch: 4 },
-    { id: 'tlc', name: 'Millennia TLC-2', kind: 'comp', inLabel: 'INPUTS', outLabel: 'OUTPUTS', ch: 4 }
+    { id: 'hv', name: 'Millennia HV-3D', kind: 'pre', inLabel: 'MIC IN', outLabel: 'LINE OUT', ch: 2 },
+    { id: 'n73', name: '1073', kind: 'pre', inLabel: 'MIC IN', outLabel: 'LINE OUT', ch: 2 },
+    { id: 'meq', name: 'Manley Massive Passive', kind: 'eq', inLabel: 'IN', outLabel: 'OUT', ch: 2 },
+    { id: 'vm', name: 'Manley Variable Mu', kind: 'comp', inLabel: 'IN', outLabel: 'OUT', ch: 2 },
+    { id: 'tlc', name: 'Millennia TLC-2', kind: 'comp', inLabel: 'IN', outLabel: 'OUT', ch: 2 }
+  ];
+  A.PRE_IDS = A.OUTBOARD.filter(o => o.kind === 'pre').map(o => o.id);
+
+  // Tie lines 1-144 as printed on the plan: [first, last, jack id maker, studio label, colour]
+  const ks = (room, kind, a) => i => 'tie:' + room + ':' + kind + (a + i);
+  const ob = (dev, io) => i => dev + '.' + io + (i + 1);
+  const spare = first => i => 'spare' + (first + i);
+  A.TIE_PLAN = [
+    [1, 8, ks('KS01', 'x', 1), 'KS01 XLR TIE LINE', 'xlr'], [9, 16, ks('KS02', 'x', 1), 'KS02 XLR TIE LINE', 'xlr'],
+    [17, 24, ks('KS03', 'x', 9), 'KS03 XLR TIE LINE', 'xlr'], [25, 40, ks('KS04', 'x', 1), 'KS04 XLR TIE LINE', 'xlr'],
+    [41, 48, ks('KS04', 't', 1), 'KS04 TRS TIE LINE', 'trs'],
+    [49, 50, ob('hv', 'in'), 'HV-3D MIC IN', 'micin'], [51, 52, ob('n73', 'in'), '1073 MIC IN', 'micin'],
+    [53, 56, spare(53), 'MIC PRE SPARE', 'spare'], [57, 58, ob('meq', 'in'), 'MAS PAS IN', 'ob'], [59, 60, ob('vm', 'in'), 'VARI MU IN', 'ob'],
+    [61, 62, ob('tlc', 'in'), 'TLC-2', 'ob'], [63, 64, spare(63), 'SPARE', 'spare'],
+    [65, 72, spare(65), 'SPARE', 'spare'], [73, 80, i => 'ha8.o' + (i + 1), 'POWER PLAY HA8000 OUTPUTS', 'ha'],
+    [81, 84, ks('KABIN01', 'x', 1), 'KABİN 01 XLR TIE LINE', 'xlr'], [85, 86, ks('KABIN01', 't', 1), 'TRS LINE', 'trs'],
+    [87, 90, ks('KABIN02', 'x', 1), 'KABİN 02 XLR TIE LINE', 'xlr'], [91, 92, ks('KABIN02', 't', 1), 'TRS LINE', 'trs'],
+    [93, 96, ks('ASMA01', 'x', 1), 'ASMA 01 XLR TIE LINE', 'xlr'],
+    [97, 98, ob('hv', 'out'), 'HV-3D LINE OUT', 'ob'], [99, 100, ob('n73', 'out'), '1073 LINE OUT', 'ob'],
+    [101, 104, spare(101), 'MIC PRE SPARE', 'spare'], [105, 106, ob('meq', 'out'), 'MAS PAS OUT', 'ob'], [107, 108, ob('vm', 'out'), 'VARI MU OUT', 'ob'],
+    [109, 110, ob('tlc', 'out'), 'TLC-2', 'ob'], [111, 112, spare(111), 'SPARE', 'spare'],
+    [113, 120, spare(113), 'SPARE', 'spare'], [121, 128, i => 'micin' + (17 + i), 'ASP8024 MIC INPUT', 'micin'],
+    [129, 136, ks('KS02', 't', 1), 'KS02 TRS TIE LINE', 'trs'], [137, 142, ks('ASMA01', 't', 1), 'ASMA 01 TRS TIE LINE', 'trs'],
+    [143, 144, spare(143), 'SPARE', 'spare']
   ];
 
   // ---------------------------------------------------------------- patchbay
@@ -106,12 +140,12 @@
   for (let b = 0; b < 4; b++) {
     const rows = [];
     for (let n = b + 1; n <= N; n += 4) {
-      const room = A.roomOfCh(n), k = A.boxIdx(n);
+      const lp = A.linePoint(n), lpm = lp && /^lb:(\w+):(\d+)$/.exec(lp);
       const p = jack('daw' + n + '.play', 'src', 'DAW ' + n, { long: 'DAW Out ' + n, cls: 'daw' });
       const ti = jack('tape' + n + '.in', 'dst', 'TAPE IN', { long: 'Ch ' + n + ' TAPE IN' });
       const ts = jack('tape' + n + '.send', 'src', 'SEND', { long: 'Ch ' + n + ' tape SEND' });
       const tr = jack('tape' + n + '.ret', 'dst', 'RET', { long: 'Ch ' + n + ' tape RET' });
-      const dv = jack('dev' + n, 'src', room + ' TRS ' + k, { long: room + ' line ' + k + ' (DEV OUT ' + n + ')', cls: 'ks' });
+      const dv = jack('dev' + n, 'src', 'DEV OUT', { long: 'DEV OUT ' + n + (lpm ? ' (' + lpm[1] + ' line ' + lpm[2] + ')' : ''), cls: 'ks' });
       const li = jack('line' + n + '.in', 'dst', 'LINE IN', { long: 'Ch ' + n + ' LINE IN' });
       const ls = jack('line' + n + '.send', 'src', 'SEND', { long: 'Ch ' + n + ' line SEND' });
       const lr = jack('line' + n + '.ret', 'dst', 'RET', { long: 'Ch ' + n + ' line RET' });
@@ -188,8 +222,8 @@
       return { title, kind: 'cells', cells: [{ num: '', rows: [[a, b, c, d]] }] };
     };
     right.push(pair('STUDIO LOUDSPEAKER', 'sls.L', 'spk.slsL', 'sls.R', 'spk.slsR', '', 'A8XL', 'A8XR', 'Studio loudspeaker send', 'Studio loudspeaker amp'));
-    right.push(pair('ARTIST FOLDBACK 1', 'fb1.L', 'ha6.L', 'fb1.R', 'ha6.R', 'FB', 'HA6L', 'HA6R', 'Artist foldback 1', 'Headamp 6 input'));
-    right.push(pair('ARTIST FOLDBACK 2', 'fb2.L', 'ha4.L', 'fb2.R', 'ha4.R', 'FB', 'HA4L', 'HA4R', 'Artist foldback 2', 'Headamp 4 input'));
+    right.push(pair('ARTIST FOLDBACK 1', 'fb1.L', 'ha8.aL', 'fb1.R', 'ha8.aR', 'FB', 'AMP', 'AMP', 'Artist foldback 1', 'HA8000 input A'));
+    right.push(pair('ARTIST FOLDBACK 2', 'fb2.L', 'ha8.bL', 'fb2.R', 'ha8.bR', 'FB', 'AMP', 'AMP', 'Artist foldback 2', 'HA8000 input B'));
     right.push(pair('MAIN SPEAKERS', 'mon.main.L', 'spk.mainL', 'mon.main.R', 'spk.mainR', '', 'FP01L', 'FP01R', 'Main speaker send', 'Main speakers (FP01)'));
     right.push(pair('ALT SPEAKERS 1', 'mon.alt1.L', 'spk.alt1L', 'mon.alt1.R', 'spk.alt1R', '', 'A8XL', 'A8XR', 'Alt 1 send', 'Alt speakers 1 (A8X)'));
     right.push(pair('ALT SPEAKERS 2', 'mon.alt2.L', 'spk.alt2L', 'mon.alt2.R', 'spk.alt2R', '', 'AURL', 'AURR', 'Alt 2 send', 'Alt speakers 2 (AUR)'));
@@ -220,31 +254,33 @@
   });
   LAYOUT.push({ id: 'right', blocks: right });
 
-  // tie lines, outboard, headamps, spares
-  const ties = [];
-  for (const r of A.ROOMS) {
-    const rl = A.roomLabel(r);
-    if (r.xlr) ties.push({ title: rl + ' XLR TIE LINE', kind: 'tie', cls: 'xlr', jacks: range(1, r.xlr).map(k => jack('tie:' + r.id + ':x' + k, 'tie', String(k), { long: rl + ' XLR tie ' + k, room: r.id })) });
-    if (r.trs) ties.push({ title: rl + ' TRS TIE LINE', kind: 'tie', cls: 'trs', jacks: range(1, r.trs).map(k => jack('tie:' + r.id + ':t' + k, 'tie', String(k), { long: rl + ' TRS tie ' + k, room: r.id })) });
+  // tie lines 1-144: room tie lines, outboard, HA8000 outputs, ch 17-24 mic inputs and spares
+  const roomName = id => A.roomLabel(A.ROOMS.find(r => r.id === id));
+  A.TIE = {};
+  for (const [a, b, make] of A.TIE_PLAN) {
+    for (let t = a; t <= b; t++) {
+      const id = make(t - a);
+      let m;
+      if ((m = /^tie:(\w+):([xt])(\d+)$/.exec(id))) jack(id, 'tie', String(t), { long: roomName(m[1]) + (m[2] === 'x' ? ' XLR ' : ' TRS ') + m[3], room: m[1] });
+      else if ((m = /^(\w+)\.(in|out)(\d)$/.exec(id))) {
+        const o = A.OUTBOARD.find(q => q.id === m[1]);
+        jack(id, m[2] === 'in' ? 'dst' : 'src', String(t), { long: o.name + ' ' + m[2] + ' ' + m[3] });
+      } else if ((m = /^ha8\.o(\d)$/.exec(id))) jack(id, 'src', String(t), { long: 'HA8000 output ' + m[1] });
+      else if ((m = /^micin(\d+)$/.exec(id))) jack(id, 'dst', String(t), { long: 'Ch ' + m[1] + ' MIC IN' });
+      else jack(id, 'inert', String(t), { long: 'Spare' });
+      A.TIE[t] = id;
+      J[id].tie = t;
+    }
   }
-  const gear = [];
-  for (const o of A.OUTBOARD) {
-    gear.push({ title: o.name.toUpperCase() + ' ' + o.inLabel, kind: 'tie', cls: o.kind === 'pre' ? 'pre' : 'ob', jacks: range(1, o.ch).map(i => jack(o.id + '.in' + i, 'dst', String(i), { long: o.name + ' in ' + i })) });
-    gear.push({ title: o.name.toUpperCase() + ' ' + o.outLabel, kind: 'tie', cls: 'ob', jacks: range(1, o.ch).map(i => jack(o.id + '.out' + i, 'src', String(i), { long: o.name + ' out ' + i })) });
-  }
-  gear.push({ title: 'HEADAMP 6 OUTPUTS', kind: 'tie', cls: 'ha', jacks: range(1, 6).map(i => jack('ha6.o' + i, 'src', String(i), { long: 'Headamp 6 output ' + i })) });
-  gear.push({ title: 'HEADAMP 4 OUTPUTS', kind: 'tie', cls: 'ha', jacks: range(1, 4).map(i => jack('ha4.o' + i, 'src', String(i), { long: 'Headamp 4 output ' + i })) });
-  gear.push({ title: 'SPARE', kind: 'tie', cls: 'spare', jacks: [69, 70, 71, 72, 73, 74, 117, 118, 119, 120, 121, 122, 123, 124].map(i => jack('spare' + i, 'inert', String(i), { long: 'Spare ' + i })) });
-  LAYOUT.push({ id: 'ties', title: 'TIE LINES', blocks: ties });
-  LAYOUT.push({ id: 'gear', title: 'OUTBOARD / HEADAMP', blocks: gear });
 
   A.J = J;
   A.NORM = NORM;
   A.NORM_D = new Map(NORM.map(n => [n.d, n]));
   A.NORM_S = new Map(NORM.map(n => [n.s, n]));
-  A.LAYOUT = LAYOUT;
   // jacks in the artist foldback section of the patchbay (used by exercise 4)
-  A.FB_SECTION = ['fb1.L', 'fb1.R', 'ha6.L', 'ha6.R', 'fb2.L', 'fb2.R', 'ha4.L', 'ha4.R'];
+  A.FB_SECTION = ['fb1.L', 'fb1.R', 'ha8.aL', 'ha8.aR', 'fb2.L', 'fb2.R', 'ha8.bL', 'ha8.bR'];
+  // HA8000 outputs 1-4 follow its input A (Foldback 1), 5-8 input B (Foldback 2)
+  A.haInput = i => (i <= 4 ? 'a' : 'b');
 
   // ---------------------------------------------------------------- default state
   function defCh() {
@@ -280,8 +316,8 @@
       fb: [{ L: 'cueA', R: 'cueA', level: 0.7, solo: false }, { L: 'cueB', R: 'cueB', level: 0.7, solo: false }],
       tb: { talk: false, level: 0.5, slate: false, studio: false, artist: false },
       ob: {
-        hv: range(1, 4).map(() => ({ gain: 40, ph: false })),
-        nv: range(1, 4).map(() => ({ gain: 40, ph: false }))
+        hv: range(1, 2).map(() => ({ gain: 40, ph: false })),
+        n73: range(1, 2).map(() => ({ gain: 40, ph: false }))
       },
       daw: range(1, N).map(() => ({ content: null })),
       plug: {}, nextDev: 1,
@@ -407,7 +443,8 @@
 
     // --- channel strip
     const ch = n => S.ch[n - 1];
-    function micIn(n) { return devOut('mb:' + A.roomOfCh(n) + ':' + A.boxIdx(n)); }
+    // mic boxes are hard-wired to some mic inputs; ch 17-24 mic inputs are on the patchbay
+    function micIn(n) { const pt = A.micPoint(n); return pt ? devOut(pt) : J['micin' + n] ? jackIn('micin' + n) : []; }
     function pre(n) {
       return node('pre' + n, () => {
         const c = ch(n);
@@ -670,18 +707,18 @@
     function outboard(dev, i) {
       return node('ob:' + dev + i, () => {
         const s = jackIn(dev + '.in' + i);
-        if (dev === 'hv' || dev === 'nv') return tag(gain(s, S.ob[dev][i - 1].gain), 'pre:' + dev + ':' + i);
+        if (A.PRE_IDS.includes(dev)) return tag(gain(s, S.ob[dev][i - 1].gain), 'pre:' + dev + ':' + i);
         if (dev === 'meq') return tag(s, 'eq:meq:' + i);
         return tag(s, 'cmp:' + dev + ':' + i);
       });
     }
-    function headamp(h) { return node('ha' + h, () => tag(sum(jackIn('ha' + h + '.L'), jackIn('ha' + h + '.R')), 'ha:' + h)); }
+    function headamp(i) { const x = A.haInput(i); return node('ha8' + x, () => tag(sum(jackIn('ha8.' + x + 'L'), jackIn('ha8.' + x + 'R')), 'ha:' + x.toUpperCase())); }
 
     const SRC = [
       [/^bus(\d+)\.[ab]$/, m => busOut(+m[1])],
       [/^daw(\d+)\.play$/, m => dawPlay(+m[1])],
       [/^tape(\d+)\.send$/, m => tapeSig(+m[1])],
-      [/^dev(\d+)$/, m => tag(devOut('lb:' + A.roomOfCh(+m[1]) + ':' + A.boxIdx(+m[1])), 'lb:' + m[1])],
+      [/^dev(\d+)$/, m => { const lp = A.linePoint(+m[1]); return lp ? tag(devOut(lp), 'lb:' + m[1]) : []; }],
       [/^line(\d+)\.send$/, m => pre(+m[1])],
       [/^sub(\d+)\.send$/, m => subIn(+m[1])],
       [/^sub(\d+)\.out$/, m => subPost(+m[1])],
@@ -693,8 +730,8 @@
       [/^cue([AB])\.out$/, m => cueOut(m[1])],
       [/^aux(\d+)\.out$/, m => auxOut(+m[1])],
       [/^lc(\d)\.out$/, m => tag(gain(jackIn('lc' + m[1] + '.in'), -12), 'lc:' + m[1])],
-      [/^(hv|nv|meq|vm|tlc)\.out(\d)$/, m => outboard(m[1], +m[2])],
-      [/^ha(\d)\.o\d$/, m => headamp(m[1])]
+      [/^(hv|n73|meq|vm|tlc)\.out(\d)$/, m => outboard(m[1], +m[2])],
+      [/^ha8\.o(\d)$/, m => headamp(+m[1])]
     ];
     function srcOut(id) {
       return node('so:' + id, () => {
@@ -721,10 +758,11 @@
     const hit = (id, where) => { powered.add(id); if (!phantomHit.has(id)) phantomHit.set(id, []); phantomHit.get(id).push(where); };
     for (let n = 1; n <= N; n++) {
       if (!S.ch[n - 1].phantom) continue;
-      const p = S.plug['mb:' + A.roomOfCh(n) + ':' + A.boxIdx(n)];
+      const pt = A.micPoint(n), p = pt && S.plug[pt];
       if (p) hit(p.id, 'ch' + n);
+      else if (!pt && J['micin' + n]) for (const c of R1.jackIn('micin' + n)) if (c.chain.every(x => /^(tie|pc|par):/.test(x))) hit(c.src, 'ch' + n);
     }
-    for (const dev of ['hv', 'nv']) S.ob[dev].forEach((o, i) => {
+    for (const dev of A.PRE_IDS) S.ob[dev].forEach((o, i) => {
       if (!o.ph) return;
       for (const c of R1.jackIn(dev + '.in' + (i + 1))) {
         if (c.chain.every(t => /^(tie|pc|par):/.test(t))) hit(c.src, dev + (i + 1));
@@ -776,9 +814,9 @@
       if (l > 22) w('fault', 'w.clip', ['Ch ' + n, l]);
       else if (l < -35) w('warn', 'w.low', ['Ch ' + n, l]);
     }
-    for (const dev of ['hv', 'nv']) for (const i of range(1, 4)) {
+    for (const dev of A.PRE_IDS) for (const i of range(1, S.ob[dev].length)) {
       const o = R.outboard(dev, i);
-      if (o.length && lvlOf(o) > 24) w('fault', 'w.clip', [dev === 'hv' ? 'HV-3D ' + i : 'Neve 5012 ' + i, lvlOf(o)]);
+      if (o.length && lvlOf(o) > 24) w('fault', 'w.clip', [A.OUTBOARD.find(q => q.id === dev).name + ' ' + i, lvlOf(o)]);
     }
     for (let n = 1; n <= N; n++) {
       const l = lvlOf(R.jackIn('daw' + n + '.in'));

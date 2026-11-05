@@ -13,7 +13,7 @@
 
   // ---------------------------------------------------------------- helpers
   const hasTag = (c, re) => c.chain.some(x => re.test(x));
-  const OUT_PRE = /^pre:(hv|nv):/, CON_PRE = /^pre:c:/, OB_EQ = /^eq:meq:/, ANY_EQ = /^eq:/, OB_CMP = /^cmp:(vm|tlc):/;
+  const OUT_PRE = /^pre:(hv|n73):/, CON_PRE = /^pre:c:/, OB_EQ = /^eq:meq:/, ANY_EQ = /^eq:/, OB_CMP = /^cmp:(vm|tlc):/;
   const dawIns = R => range(1, N).map(n => ({ n, cs: R.jackIn('daw' + n + '.in') }));
   const chansOf = c => new Set(c.chain.map(A.chanOfTag).filter(Boolean));
   const idxOf = (c, re, from) => { for (let i = from || 0; i < c.chain.length; i++) if (re.test(c.chain[i])) return i; return -1; };
@@ -30,10 +30,10 @@
       id: 'w1', group: { tr: 'Isınma', en: 'Warm-up' },
       title: { tr: 'Mikrofonu DAW\'a gönder', en: 'Send a mic to the DAW' },
       text: {
-        tr: 'KS01\'deki MIC 1 noktasına bir kondenser mikrofon takılı. Bu mikrofonun sinyalini <b>DAW In 1</b>\'e sağlıklı bir seviyede (-24…+12 dBu arası) gönder.',
-        en: 'A condenser mic is plugged into MIC 1 in KS01. Get it to <b>DAW In 1</b> at a healthy level (-24…+12 dBu).'
+        tr: 'KS03\'teki MIC 1 noktasına bir kondenser mikrofon takılı. Bu mikrofonun sinyalini <b>DAW In 1</b>\'e sağlıklı bir seviyede (-24…+12 dBu arası) gönder.',
+        en: 'A condenser mic is plugged into MIC 1 in KS03. Get it to <b>DAW In 1</b> at a healthy level (-24…+12 dBu).'
       },
-      preset(S) { mic(S, 'mb:KS01:1'); },
+      preset(S) { mic(S, 'mb:KS03:1'); },
       check(R) {
         const cs = R.jackIn('daw1.in').filter(c => c.src === 'd1');
         const l = A.lvlOf(cs);
@@ -61,15 +61,15 @@
       id: 'w3', group: { tr: 'Isınma', en: 'Warm-up' },
       title: { tr: 'Sanatçıya cue mix', en: 'A cue mix for the artist' },
       text: {
-        tr: 'KS01 MIC 1\'de vokal mikrofonu, DAW 3. kanalda bas kaydı var. <b>Headamp 6</b>\'ya bağlı sanatçı, ikisini de <b>Cue A</b> üzerinden iki kulağında (mono) duysun.',
-        en: 'A vocal mic is on KS01 MIC 1 and a bass take is on DAW track 3. The artist on <b>Headamp 6</b> should hear both through <b>Cue A</b>, in both ears (mono).'
+        tr: 'KS03 MIC 1\'de vokal mikrofonu, DAW 3. kanalda bas kaydı var. <b>HA8000 A</b>\'ya (Foldback 1) bağlı sanatçı, ikisini de <b>Cue A</b> üzerinden iki kulağında (mono) duysun.',
+        en: 'A vocal mic is on KS03 MIC 1 and a bass take is on DAW track 3. The artist on <b>HA8000 A</b> (Foldback 1) should hear both through <b>Cue A</b>, in both ears (mono).'
       },
-      preset(S) { mic(S, 'mb:KS01:1'); take(S, 3, 'bass'); },
+      preset(S) { mic(S, 'mb:KS03:1'); take(S, 3, 'bass'); },
       check(R) {
-        const ok = (side, src) => R.jackIn('ha6.' + side).some(c => c.src === src && c.chain.includes('cue:A'));
+        const ok = (side, src) => R.jackIn('ha8.a' + side).some(c => c.src === src && c.chain.includes('cue:A'));
         return [micItem(R, 'd1'),
-          item(ok('L', 'd1') && ok('R', 'd1'), 'Vokal Cue A üzerinden HA6 L ve R\'de.', 'Vocal is on HA6 L and R via Cue A.'),
-          item(ok('L', 'take:bass') && ok('R', 'take:bass'), 'Bas kaydı Cue A üzerinden HA6 L ve R\'de.', 'Bass take is on HA6 L and R via Cue A.')];
+          item(ok('L', 'd1') && ok('R', 'd1'), 'Vokal Cue A üzerinden HA8000 A L ve R\'de.', 'Vocal is on HA8000 A L and R via Cue A.'),
+          item(ok('L', 'take:bass') && ok('R', 'take:bass'), 'Bas kaydı Cue A üzerinden HA8000 A L ve R\'de.', 'Bass take is on HA8000 A L and R via Cue A.')];
       }
     },
     {
@@ -79,7 +79,7 @@
         tr: 'Kayıt odasına yerleştirilmiş mikrofon ile kayıt alınıyor; EQ ve kompresör işlemleri outboard ile yapılacak.<br>Bir mikrofondan gelen sinyali kopyalayın; bir kopyayı <b>mikserin preamplifikatöründen</b>, diğer kopyayı <b>outboard preamplifikatörden</b> geçirin; iki ayrı DAW kanalına kaydedin (iki farklı DAW girişine ulaştırın).<br><span class="muted">Mikrofonu "Odalar & Outboard" sekmesinden istediğin noktaya taşıyabilirsin.</span>',
         en: 'A mic in the live room is being recorded; EQ and compression are done with outboard gear.<br>Split the signal of one mic: run one copy through the <b>console preamp</b> and the other through an <b>outboard preamp</b>, and get them to two different DAW inputs.<br><span class="muted">You can move the mic to any point in the "Rooms & Outboard" tab.</span>'
       },
-      preset(S) { mic(S, 'mb:KS01:1'); },
+      preset(S) { mic(S, 'mb:KS03:1'); },
       check(R) {
         const ins = dawIns(R);
         const a = ins.filter(x => x.cs.some(c => c.src === 'd1' && hasTag(c, CON_PRE) && !hasTag(c, OUT_PRE)));
@@ -87,7 +87,7 @@
         const two = a.some(x => b.some(y => y.n !== x.n));
         return [micItem(R, 'd1'),
           item(a.length, 'Bir DAW girişinde mikrofon yalnızca konsol preamp\'inden geçmiş olarak var.', 'One DAW input has the mic through the console preamp only.'),
-          item(b.length, 'Bir DAW girişinde mikrofon yalnızca outboard preamp\'ten (HV-3D / Neve 5012) geçmiş olarak var.', 'One DAW input has the mic through an outboard preamp only (HV-3D / Neve 5012).'),
+          item(b.length, 'Bir DAW girişinde mikrofon yalnızca outboard preamp\'ten (HV-3D / 1073) geçmiş olarak var.', 'One DAW input has the mic through an outboard preamp only (HV-3D / 1073).'),
           item(two, 'İki kopya iki farklı DAW girişinde.', 'The two copies are on two different DAW inputs.')];
       }
     },
@@ -95,10 +95,10 @@
       id: 's1b', group: { tr: 'Soru 1b', en: 'Question 1b' }, methods: 2,
       title: { tr: 'EQ\'lu ve EQ\'suz', en: 'With and without EQ' },
       text: {
-        tr: 'Bir mikrofondan gelen sinyalin <b>EQ\'dan geçirilmiş</b> (outboard Manley EQ) ve <b>geçirilmemiş</b> hallerini iki ayrı DAW kanalına gönderin; bunu <b>iki farklı yöntemle</b> yapın.',
-        en: 'Send the signal of one mic to two DAW inputs: one <b>through EQ</b> (outboard Manley EQ), one <b>without EQ</b>. Do it <b>two different ways</b>.'
+        tr: 'Bir mikrofondan gelen sinyalin <b>EQ\'dan geçirilmiş</b> (outboard Massive Passive) ve <b>geçirilmemiş</b> hallerini iki ayrı DAW kanalına gönderin; bunu <b>iki farklı yöntemle</b> yapın.',
+        en: 'Send the signal of one mic to two DAW inputs: one <b>through EQ</b> (outboard Massive Passive), one <b>without EQ</b>. Do it <b>two different ways</b>.'
       },
-      preset(S) { mic(S, 'mb:KS01:1'); },
+      preset(S) { mic(S, 'mb:KS03:1'); },
       check(R) {
         const ins = dawIns(R);
         let pair = null;
@@ -107,7 +107,7 @@
           for (const y of ins) if (y.n !== x.n) for (const d of y.cs) if (d.src === 'd1' && !hasTag(d, ANY_EQ)) pair = pair || [c, d];
         }
         const items = [micItem(R, 'd1'),
-          item(ins.some(x => x.cs.some(c => c.src === 'd1' && hasTag(c, OB_EQ))), 'Bir DAW girişinde mikrofon Manley EQ\'dan geçmiş.', 'One DAW input has the mic through the Manley EQ.'),
+          item(ins.some(x => x.cs.some(c => c.src === 'd1' && hasTag(c, OB_EQ))), 'Bir DAW girişinde mikrofon Massive Passive\'dan geçmiş.', 'One DAW input has the mic through the Massive Passive.'),
           item(pair, 'Başka bir DAW girişinde aynı mikrofon EQ\'suz.', 'Another DAW input has the same mic without any EQ.')];
         return { items, sig: pair ? sigOf(pair) : null };
       }
@@ -119,7 +119,7 @@
         tr: 'Bir mikrofondan gelen sinyali EQ\'dan geçirin; işlenmiş sinyali kaydedin; işlenmiş ve kaydedilmiş sinyali kompresörden geçirip kaydedin; bütün bu süreçte <b>yalnızca tek mikser kanalı</b> kullanın.<br><span class="muted">Kayıt için "DAW / Ses kartı" sekmesindeki ● REC düğmesini kullan.</span>',
         en: 'Run a mic through EQ and record it; then run that recorded, EQ\'d signal through a compressor and record the result. Use <b>only one mixer channel</b> for all of it.<br><span class="muted">Record with the ● REC buttons in the "DAW / Interface" tab.</span>'
       },
-      preset(S) { mic(S, 'mb:KS01:1'); },
+      preset(S) { mic(S, 'mb:KS03:1'); },
       check(R, S) {
         const recs = S.daw.map((d, i) => ({ n: i + 1, cs: d.content || [] }));
         const first = recs.filter(r => r.cs.some(c => c.src === 'd1' && hasTag(c, OB_EQ) && !hasTag(c, OB_CMP)));
@@ -222,10 +222,10 @@
       id: 's3a', group: { tr: 'Soru 3a', en: 'Question 3a' }, maxCables: 2,
       title: { tr: 'Mikrofon ve kayıt aynı kompresörde', en: 'Mic and take through one compressor' },
       text: {
-        tr: 'Hem kayıt odasındaki mikrofon (KS01 MIC 1) ile kayıt alınıyor, hem de DAW\'daki kayıt (2. kanal, gitar) miksere geliyor. <b>Bütün sinyalleri aynı kompresör kanalından</b> geçirin; mikrofondan gelen sinyal henüz DAW\'a girmemiş olsun; <b>en fazla 2 patch kablosu</b> kullanın.',
-        en: 'A mic in the live room (KS01 MIC 1) is being recorded while a guitar take (DAW track 2) plays back through the desk. Run <b>all of it through the same compressor channel</b>; the mic must not have gone through the DAW yet; use <b>at most 2 patch cables</b>.'
+        tr: 'Hem kayıt odasındaki mikrofon (KS03 MIC 1) ile kayıt alınıyor, hem de DAW\'daki kayıt (2. kanal, gitar) miksere geliyor. <b>Bütün sinyalleri aynı kompresör kanalından</b> geçirin; mikrofondan gelen sinyal henüz DAW\'a girmemiş olsun; <b>en fazla 2 patch kablosu</b> kullanın.',
+        en: 'A mic in the live room (KS03 MIC 1) is being recorded while a guitar take (DAW track 2) plays back through the desk. Run <b>all of it through the same compressor channel</b>; the mic must not have gone through the DAW yet; use <b>at most 2 patch cables</b>.'
       },
-      preset(S) { mic(S, 'mb:KS01:1'); take(S, 2, 'gtr'); },
+      preset(S) { mic(S, 'mb:KS03:1'); take(S, 2, 'gtr'); },
       check(R, S) {
         let both = false;
         for (const dev of ['vm', 'tlc']) for (const i of range(1, 4)) {
@@ -243,13 +243,13 @@
       id: 's4', group: { tr: 'Soru 4', en: 'Question 4' }, methods: 2,
       title: { tr: 'Cue ve patchbay foldback olmadan', en: 'Foldback without Cue or the FB patch' },
       text: {
-        tr: 'Mikrofondan (KS01 MIC 1) sinyal alın; sinyali DAW\'a sokmaksızın <b>Artist Foldback</b>\'e (Headamp 6 ya da 4) yollayın. Ancak sinyal hem <b>patchbay\'in Artist Foldback bölümünden</b>, hem de <b>Cue A ve Cue B</b> bus\'larından geçmemeli. Bunu <b>iki farklı yöntemle</b> yapın.',
-        en: 'Take the mic (KS01 MIC 1) to the <b>artist foldback</b> (Headamp 6 or 4) without going through the DAW. The signal must not pass through the <b>Artist Foldback section of the patchbay</b>, nor through <b>Cue A or Cue B</b>. Do it <b>two different ways</b>.'
+        tr: 'Mikrofondan (KS03 MIC 1) sinyal alın; sinyali DAW\'a sokmaksızın <b>Artist Foldback</b>\'e (HA8000) yollayın. Ancak sinyal hem <b>patchbay\'in Artist Foldback bölümünden</b>, hem de <b>Cue A ve Cue B</b> bus\'larından geçmemeli. Bunu <b>iki farklı yöntemle</b> yapın.',
+        en: 'Take the mic (KS03 MIC 1) to the <b>artist foldback</b> (HA8000) without going through the DAW. The signal must not pass through the <b>Artist Foldback section of the patchbay</b>, nor through <b>Cue A or Cue B</b>. Do it <b>two different ways</b>.'
       },
-      preset(S) { mic(S, 'mb:KS01:1'); },
+      preset(S) { mic(S, 'mb:KS03:1'); },
       check(R, S) {
         const ok = c => c.src === 'd1' && !hasTag(c, /^(play|rec|cue):/);
-        const hits = ['ha6.L', 'ha6.R', 'ha4.L', 'ha4.R'].map(j => R.jackIn(j).filter(ok)).reduce((a, b) => a.concat(b), []);
+        const hits = ['ha8.aL', 'ha8.aR', 'ha8.bL', 'ha8.bR'].map(j => R.jackIn(j).filter(ok)).reduce((a, b) => a.concat(b), []);
         const fbPatched = S.cables.some(c => A.FB_SECTION.includes(c.a) || A.FB_SECTION.includes(c.b));
         const items = [micItem(R, 'd1'),
           item(hits.length, 'Mikrofon, DAW ve Cue A/B\'ye uğramadan bir artist kulaklık amfisine ulaşıyor.', 'The mic reaches an artist headamp without the DAW or Cue A/B.'),
