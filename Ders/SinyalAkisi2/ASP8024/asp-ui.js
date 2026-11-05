@@ -6,7 +6,7 @@
   const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-  const LANG_KEY = 'asp8024.lang', SAND_KEY = 'asp8024.sandbox', VIEW_KEY = 'asp8024.view', MODE_KEY = 'asp8024.mode', SEC_KEY = 'asp8024.hiddenSecs';
+  const LANG_KEY = 'asp8024.lang', SAND_KEY = 'asp8024.sandbox', VIEW_KEY = 'asp8024.view', MODE_KEY = 'asp8024.mode', SEC_KEY = 'asp8024.hiddenSecs', STUDIO_KEY = 'asp8024.studioLabels';
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage unavailable */ } }
@@ -36,7 +36,7 @@
     if (m) return m[1] + ' Mic ' + m[2];
     m = /^lb:(\w+):(\d+)$/.exec(pt);
     if (m) return m[1] + ' Line ' + m[2];
-    if (A.J[pt]) return A.J[pt].long;
+    if (A.J[pt]) return jackName(pt);
     return pt;
   }
   function srcLabel(src) {
@@ -257,65 +257,67 @@
   }
 
   // ---------------------------------------------------------------- patchbay
-  function jk(id) {
-    const j = A.J[id];
-    return '<span class="jk ' + (j.cls || '') + '" data-j="' + id + '" title="' + esc(j.long) + '"><i></i><em>' + esc(j.label) + '</em></span>';
-  }
+  // The faceplate (asp-patchbay.js) is drawn at its natural size and scaled into the view:
+  // the overview shows the whole panel; clicking a section zooms into it for patching.
   function renderPatch() {
-    const h = [];
-    const sec = id => A.LAYOUT.find(s => s.id === id);
-    h.push('<div class="pbrow">');
-    for (const b of sec('mt').blocks) {
-      h.push('<div class="pblk"><h5>' + b.title + '</h5><div class="cells">' + b.cells.map(c =>
-        '<div class="cell"><div class="r">' + c.rows[0].map(jk).join('') + '</div><div class="num">' + c.num + '</div><div class="r">' + c.rows[1].map(jk).join('') + '</div></div>').join('') + '</div></div>');
+    const PB = A.PB;
+    $('#pb').style.width = PB.W + 'px';
+    $('#pb').style.height = PB.H + 'px';
+    $('#pb').innerHTML = PB.html +
+      '<svg id="pbSvg" class="cables" width="' + PB.W + '" height="' + PB.H + '" viewBox="0 0 ' + PB.W + ' ' + PB.H + '"></svg>' +
+      PB.zones.map(z => '<div class="zone" data-zone="' + z.id + '" style="left:' + z.x + 'px;top:' + z.y + 'px;width:' + z.w + 'px;height:' + z.h + 'px"><span>' + z.label + '</span></div>').join('');
+    $('#pbNav').innerHTML = '<button class="btn sm" data-zone="">' + t('pb.all') + '</button>' +
+      PB.zones.map(z => '<button class="btn sm" data-zone="' + z.id + '">' + z.label + '</button>').join('');
+  }
+  function zoomTo(id) {
+    U.pbZone = id || null;
+    applyZoom();
+    refreshPatch();
+  }
+  function applyZoom() {
+    const view = $('#pbView'), pb = $('#pb');
+    if (!view || !pb || U.view !== 'patch') return;
+    const PB = A.PB, vw = view.clientWidth;
+    const z = U.pbZone && PB.zones.find(q => q.id === U.pbZone);
+    let s, tx, ty, vh;
+    if (!z) { s = vw / PB.W; tx = 0; ty = 0; vh = PB.H * s; }
+    else {
+      s = Math.min(vw / z.w, Math.max(320, window.innerHeight * 0.78) / z.h, 2.8);
+      tx = -z.x * s + (vw - z.w * s) / 2; ty = -z.y * s; vh = z.h * s;
     }
-    h.push('</div><div class="pbrow">');
-    for (const b of sec('paths').blocks) {
-      h.push('<div class="pblk paths"><h5><span>TAPE RETURN PATH</span><span>CHANNEL PATH</span></h5>' + b.rows.map(r =>
-        '<div class="prow"><div class="grp tape">' + r.tape.map(jk).join('') + '</div><div class="pnum">' + r.num + '</div><div class="grp chan">' + r.chan.map(jk).join('') + '</div></div>').join('') + '</div>');
-    }
-    h.push('<div class="pcol">');
-    for (const b of sec('right').blocks) {
-      h.push('<div class="pblk"><h5>' + b.title + '</h5><div class="cells">' + b.cells.map(c =>
-        '<div class="cell' + (c.par ? ' par' : '') + '">' + c.rows.map(r => '<div class="r">' + r.map(jk).join('') + '</div>').join('') + (c.num !== '' ? '<div class="num">' + c.num + '</div>' : '') + '</div>').join('') + '</div></div>');
-    }
-    h.push('</div></div>');
-    for (const id of ['ties', 'gear']) {
-      const s = sec(id);
-      h.push('<div class="pbrow wrap"><h4 class="pbh">' + s.title + '</h4>');
-      for (const b of s.blocks) h.push('<div class="pblk tie ' + (b.cls || '') + '"><h5>' + b.title + '</h5><div class="r">' + b.jacks.map(jk).join('') + '</div></div>');
-      h.push('</div>');
-    }
-    $('#pb').innerHTML = h.join('') + '<svg id="pbSvg" class="cables"></svg>';
+    U.pbScale = s;
+    pb.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + s + ')';
+    view.style.height = vh + 'px';
+    view.classList.toggle('zoomed', !!z);
+    for (const b of $$('#pbNav [data-zone]')) b.classList.toggle('primary', (b.dataset.zone || null) === U.pbZone);
   }
   const CABLE_COLORS = ['#ff5c7a', '#5cb8ff', '#ffd25c', '#c77dff', '#00ff96', '#ff9f43', '#4dd0e1', '#f06292', '#aed581', '#ffffff'];
-  function holeXY(id) {
-    const el = $('#pb .jk[data-j="' + CSS.escape(id) + '"] i');
-    if (!el) return null;
-    const pr = $('#pb').getBoundingClientRect(), r = el.getBoundingClientRect();
-    return [r.left - pr.left + r.width / 2, r.top - pr.top + r.height / 2];
+  const holeXY = id => A.PB.pos[id] || null;
+  // pointer position in faceplate coordinates
+  function pbPoint(e) {
+    const r = $('#pb').getBoundingClientRect(), s = U.pbScale || 1;
+    return [(e.clientX - r.left) / s, (e.clientY - r.top) / s];
   }
   function cablePath(p, q) {
     const d = Math.hypot(q[0] - p[0], q[1] - p[1]);
-    const sag = 24 + d * 0.18;
+    const sag = 18 + d * 0.15;
     return 'M' + p[0] + ' ' + p[1] + ' C' + p[0] + ' ' + (p[1] + sag) + ' ' + q[0] + ' ' + (q[1] + sag) + ' ' + q[0] + ' ' + q[1];
   }
   function drawCables() {
-    const pb = $('#pb'), svg = $('#pbSvg');
-    if (!pb || !svg || U.view !== 'patch') return;
-    svg.setAttribute('width', pb.scrollWidth);
-    svg.setAttribute('height', pb.scrollHeight);
+    const svg = $('#pbSvg');
+    if (!svg || U.view !== 'patch') return;
     const parts = [];
     U.S.cables.forEach((c, i) => {
       const p = holeXY(c.a), q = holeXY(c.b);
       if (!p || !q) return;
       const d = cablePath(p, q), col = CABLE_COLORS[i % CABLE_COLORS.length];
       parts.push('<g class="cab' + (i === U.selCable ? ' sel' : '') + '" data-c="' + i + '"><path class="hit" d="' + d + '"/><path class="wire" d="' + d + '" stroke="' + col + '"/>' +
-        '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="5" fill="' + col + '"/><circle cx="' + q[0] + '" cy="' + q[1] + '" r="5" fill="' + col + '"/></g>');
+        '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="6" fill="' + col + '"/><circle cx="' + q[0] + '" cy="' + q[1] + '" r="6" fill="' + col + '"/></g>');
     });
     parts.push('<path id="dragWire" class="drag" d=""/>');
     svg.innerHTML = parts.join('');
   }
+  const jackName = id => (A.J[id].tie ? 'TIE ' + A.J[id].tie + ' · ' : '') + A.J[id].long;
   function cableIndexAt(id) { return U.S.cables.findIndex(c => c.a === id || c.b === id); }
   function connect(a, b) {
     if (a === b) return;
@@ -343,26 +345,19 @@
   }
   function renderRooms() {
     const h = [];
+    // each room lists only its wall connectors, as printed on the boxes; no signal indicators,
+    // students find out whether something arrives with the desk's meters and monitoring
+    const pts = (prefix, label, n, allowDst) => '<div class="pts">' + range(1, n).map(k =>
+      '<label class="pt"><span>' + label + ' ' + k + '</span>' + ptSelect(prefix + k, allowDst) + '</label>').join('') + '</div>';
     for (const r of A.ROOMS) {
-      const rl = A.roomLabel(r), g = [];
+      const g = [];
       if (r.box) {
-        g.push('<h5>' + t('rooms.box') + '</h5><div class="pts">' + range(1, 8).map(k => {
-          const pt = 'mb:' + r.id + ':' + k;
-          return '<label class="pt"><span>MIC ' + k + ' → Ch' + (r.ch0 + k - 1) + '</span>' + ptSelect(pt) + '<i class="led" data-led="' + pt + '"></i></label>';
-        }).join('') + '</div>');
-        g.push('<h5>' + t('rooms.line') + '</h5><div class="pts">' + range(1, 8).map(k => {
-          const pt = 'lb:' + r.id + ':' + k;
-          return '<label class="pt"><span>LINE ' + k + ' → DEV ' + (r.ch0 + k - 1) + '</span>' + ptSelect(pt) + '<i class="led" data-led="' + pt + '"></i></label>';
-        }).join('') + '</div>');
+        g.push(pts('mb:' + r.id + ':', 'MIC', 8));
+        g.push(pts('lb:' + r.id + ':', 'LINE', 8));
       }
-      for (const [kind, cnt] of [['x', r.xlr], ['t', r.trs]]) {
-        if (!cnt) continue;
-        g.push('<h5>' + t(kind === 'x' ? 'rooms.xlr' : 'rooms.trs') + '</h5><div class="pts">' + range(1, cnt).map(k => {
-          const pt = 'tie:' + r.id + ':' + kind + k;
-          return '<label class="pt"><span>' + (kind === 'x' ? 'XLR ' : 'TRS ') + k + '</span>' + ptSelect(pt, true) + '<i class="led" data-led="' + pt + '"></i></label>';
-        }).join('') + '</div>');
-      }
-      h.push('<div class="room"><h3>' + rl + '</h3>' + g.join('') + '</div>');
+      if (r.xlr) g.push(pts('tie:' + r.id + ':x', 'XLR', r.xlr, true));
+      if (r.trs) g.push(pts('tie:' + r.id + ':t', 'TRS', r.trs, true));
+      h.push('<div class="room"><h3>' + A.roomLabel(r) + '</h3>' + g.join('') + '</div>');
     }
     $('#rooms').innerHTML = h.join('');
     const o = [];
@@ -512,20 +507,6 @@
     drawCables();
     const cnt = $('#pbCount'); if (cnt) cnt.textContent = t('pb.count', U.S.cables.length);
   }
-  function refreshRooms() {
-    if (U.view !== 'rooms') return;
-    for (const el of $$('[data-led]')) {
-      const pt = el.dataset.led, p = U.S.plug[pt];
-      let on = false;
-      if (p) {
-        const d = A.DEVICES[p.type];
-        on = d.kind === 'src' ? U.R.devOut(pt).length > 0 : U.R.jackIn(pt).length > 0;
-      }
-      el.classList.toggle('on', on);
-      el.classList.toggle('dead', !!p && !on);
-      el.title = p ? p.id : '';
-    }
-  }
   function refreshDaw() {
     if (U.view !== 'daw') return;
     for (const el of $$('[data-dawin]')) {
@@ -545,7 +526,7 @@
     const W = R.warnings.slice();
     const wl = $('#warnList');
     wl.innerHTML = W.length ? W.map(w => {
-      const args = w.args.map(a => typeof a === 'number' && !Number.isInteger(a) ? dbStr(a) + ' dBu' : (A.J[a] ? A.J[a].long : (typeof a === 'string' && /^d\d+$/.test(a) ? srcLabel(a) : a)));
+      const args = w.args.map(a => typeof a === 'number' && !Number.isInteger(a) ? dbStr(a) + ' dBu' : (A.J[a] ? jackName(a) : (typeof a === 'string' && /^d\d+$/.test(a) ? srcLabel(a) : a)));
       return '<li class="' + w.lvl + '">' + esc(t.apply(null, [w.key].concat(args))) + '</li>';
     }).join('') : '<li class="ok">' + t('side.none') + '</li>';
     // inspector
@@ -553,7 +534,7 @@
     if (!U.insp) ins.innerHTML = '<p class="muted small">' + t('side.inspHint') + '</p>';
     else if (U.insp.jack) {
       const id = U.insp.jack, j = A.J[id], role = R.roleOf(id);
-      const parts = ['<div class="ih">' + esc(j.long) + '</div>'];
+      const parts = ['<div class="ih">' + esc(jackName(id)) + '</div>'];
       const nd = A.NORM_D.get(id), ns = A.NORM_S.get(id);
       const nm = nd || ns;
       if (nm) {
@@ -563,7 +544,7 @@
       const ci = cableIndexAt(id);
       if (ci >= 0) {
         const c = U.S.cables[ci];
-        parts.push('<div class="small">' + esc(t('pb.cable', A.J[c.a].long, A.J[c.b].long)) + ' <button class="btn sm danger" data-rmc="' + ci + '">' + t('btn.rmCable') + '</button></div>');
+        parts.push('<div class="small">' + esc(t('pb.cable', jackName(c.a), jackName(c.b))) + ' <button class="btn sm danger" data-rmc="' + ci + '">' + t('btn.rmCable') + '</button></div>');
       }
       if (role === 'src' || role === 'par') parts.push('<h4>' + t('pb.gives') + '</h4>' + compsHtml(R.jackOut(id)));
       if (role === 'dst' || role === 'inert') parts.push('<h4>' + t('pb.gets') + '</h4>' + compsHtml(R.jackIn(id)));
@@ -620,7 +601,6 @@
     refreshControls();
     refreshMeters();
     refreshPatch();
-    refreshRooms();
     refreshDaw();
     refreshSide();
     if (A.EX) A.EX.refresh();
@@ -649,6 +629,8 @@
       if (clr) { U.S.daw[clr.dataset.clr - 1].content = null; changed(); return; }
       const vb = e.target.closest('#viewSeg button');
       if (vb) { setView(vb.dataset.view); return; }
+      const zb = e.target.closest('[data-zone]');
+      if (zb) { zoomTo(zb.dataset.zone); return; }
       const cab = e.target.closest('g.cab');
       if (cab) { U.selCable = +cab.dataset.c; const c = U.S.cables[U.selCable]; U.insp = { jack: c.a }; refreshPatch(); refreshSide(); return; }
     });
@@ -704,9 +686,13 @@
     document.addEventListener('keydown', e => {
       if (e.target.matches('input, select, textarea')) return;
       if ((e.key === 'Delete' || e.key === 'Backspace') && U.selCable >= 0 && U.view === 'patch') { e.preventDefault(); removeCable(U.selCable); }
-      if (e.key === 'Escape') { U.pending = null; U.selCable = -1; setMsg(''); refreshPatch(); }
+      if (e.key === 'Escape') {
+        // first Esc drops a half-made cable or selection, the next one zooms back out to the whole panel
+        if (U.pending || U.selCable >= 0) { U.pending = null; U.selCable = -1; setMsg(''); refreshPatch(); }
+        else if (U.view === 'patch' && U.pbZone) zoomTo(null);
+      }
     });
-    window.addEventListener('resize', () => drawCables());
+    window.addEventListener('resize', () => applyZoom());
   }
 
   let pbDrag = null;
@@ -716,8 +702,7 @@
   function pbMove(e) {
     if (Math.hypot(e.clientX - pbDrag.x, e.clientY - pbDrag.y) > 6) pbDrag.moved = true;
     if (!pbDrag.moved) return;
-    const p = holeXY(pbDrag.id), pr = $('#pb').getBoundingClientRect();
-    const q = [e.clientX - pr.left, e.clientY - pr.top];
+    const p = holeXY(pbDrag.id), q = pbPoint(e);
     const w = $('#dragWire');
     if (p && w) w.setAttribute('d', cablePath(p, q));
     for (const el of $$('#pb .jk.drop')) el.classList.remove('drop');
@@ -749,7 +734,7 @@
     } else if (U.pending === id) {
       U.pending = null; setMsg('');
     } else {
-      U.pending = id; U.selCable = -1; setMsg(t('pb.pending'));
+      U.pending = id; U.selCable = -1; setMsg(t('pb.pending', jackName(id)));
     }
     refreshPatch();
     refreshSide();
@@ -760,6 +745,7 @@
     store.set(VIEW_KEY, v);
     for (const b of $$('#viewSeg button')) b.classList.toggle('on', b.dataset.view === v);
     for (const s of $$('.view')) s.hidden = s.id !== 'v-' + v;
+    applyZoom();
     refresh();
   }
   function showSide() { /* the side panel is always visible on wide screens; on phones it follows the views */ }
@@ -793,12 +779,19 @@
       try {
         const s = JSON.parse(r.result);
         if (!s || !Array.isArray(s.ch) || s.ch.length !== N) throw new Error('bad');
-        U.S = A.upgrade(s);
-        changed();
-      } catch (err) { alert('JSON?'); }
+        U.loadState(A.upgrade(s));
+        const dlg = $('#impDlg'); if (dlg && dlg.open) dlg.close();
+      } catch (err) { alert(t('imp.bad')); }
     };
     r.readAsText(file);
   }
+  // replace the current setup (sandbox, or the open exercise) with a loaded one
+  U.loadState = function (s) {
+    U.S = s;
+    if (U.mode !== 'ex') U.sandbox = s;
+    U.insp = null; U.selCable = -1; U.pending = null;
+    changed();
+  };
   // fill in fields that older saved states may lack
   A.upgrade = function (s) {
     const d = A.defaultState();
@@ -835,6 +828,12 @@
       changed();
     });
     $('#clearCablesBtn').addEventListener('click', () => { U.S.cables = []; U.selCable = -1; changed(); });
+    // studio labelling strip under the tie lines (what each tie line is wired to in this studio)
+    const studioCb = $('#pbStudio');
+    studioCb.checked = store.get(STUDIO_KEY) !== '0';
+    const applyStudio = () => $('#pb').classList.toggle('nostudio', !studioCb.checked);
+    applyStudio();
+    studioCb.addEventListener('change', () => { store.set(STUDIO_KEY, studioCb.checked ? '1' : '0'); applyStudio(); });
     let hidden = [];
     try { hidden = JSON.parse(store.get(SEC_KEY) || '[]'); } catch (e) { hidden = []; }
     for (const cb of $$('input[data-sec]')) {
@@ -847,9 +846,9 @@
       });
     }
     $('#exportBtn').addEventListener('click', exportState);
-    $('#importBtn').addEventListener('click', () => $('#importFile').click());
     $('#importFile').addEventListener('change', e => { if (e.target.files[0]) importState(e.target.files[0]); e.target.value = ''; });
     if (A.EX) A.EX.init(store.get(MODE_KEY) === 'ex');
+    if (A.SHARE) A.SHARE.init();
     $$('#modeSeg button').forEach(b => b.addEventListener('click', () => { store.set(MODE_KEY, b.dataset.mode); A.EX.setMode(b.dataset.mode); }));
     const v = store.get(VIEW_KEY);
     U.view = ['console', 'patch', 'rooms', 'daw'].includes(v) ? v : 'console';

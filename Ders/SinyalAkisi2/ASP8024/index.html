@@ -7,7 +7,7 @@
   <link rel="icon" type="image/x-icon" href="../../../favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Roboto+Mono:wght@400;700&family=Noto+Sans+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Roboto+Condensed:wght@400;700&family=Roboto+Mono:wght@400;700&family=Noto+Sans+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #0a0a0a;
@@ -254,62 +254,81 @@
     .mini.efxm { width: 110px; }
     .oscf { font-size: 11px; color: var(--yel); margin-left: 6px; align-self: center; }
 
-    /* patchbay */
+    /* patchbay: the faceplate is drawn at natural size and scaled into .pbview */
     .pbbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; font-size: 12px; color: var(--dim); }
     #pbMsg.bad { color: var(--fault); }
-    .pbscroll { overflow: auto; max-height: 78vh; border: 1px solid var(--line); border-radius: 6px; background: #0b0f0d; }
-    #pb { position: relative; width: max-content; padding: 10px 14px 40px; }
-    .pbrow { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
-    .pbrow.wrap { flex-wrap: wrap; max-width: 1900px; }
-    .pbh { width: 100%; margin: 0; font-size: 12px; color: var(--accent); letter-spacing: 2px; }
-    .pblk { background: #121a16; border: 1px solid #3b3220; border-radius: 4px; padding: 4px 6px; }
-    .pblk h5 { margin: 0 0 4px; font-size: 10px; color: #e0c48a; letter-spacing: 1px; font-weight: normal; display: flex; justify-content: space-between; gap: 10px; }
-    .pcol { display: flex; flex-wrap: wrap; gap: 8px; width: 760px; align-content: flex-start; }
-    .cells { display: flex; flex-wrap: wrap; gap: 4px; }
-    .cell { border: 1px solid #2b2a20; border-radius: 3px; padding: 2px; background: #171d19; display: flex; flex-direction: column; align-items: center; }
-    .cell .num { font-size: 10px; color: var(--dim); }
-    .r { display: flex; gap: 2px; }
-    .prow { display: flex; align-items: center; gap: 4px; margin-bottom: 3px; }
-    .grp { display: flex; gap: 2px; padding: 2px; border-radius: 3px; background: #171d19; }
-    .pnum { font-size: 10px; color: var(--dim); width: 16px; text-align: center; }
-    .jk { display: inline-flex; flex-direction: column; align-items: center; width: 46px; cursor: pointer; user-select: none; touch-action: none; }
-    .jk i { width: 15px; height: 15px; border-radius: 50%; border: 2px solid #6b7a73; background: #050806; display: block; transition: box-shadow 0.15s; }
-    .jk em { font-style: normal; font-size: 8.5px; color: #cfd8d3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46px; padding: 0 2px; border-radius: 2px; margin-top: 1px; }
-    .jk.r-src em::before { content: '▲'; color: #39d98a; font-size: 7px; margin-right: 1px; }
-    .jk.r-dst em::before { content: '▼'; color: #e0c48a; font-size: 7px; margin-right: 1px; }
-    .jk.daw em { background: #5b3a7a; }
-    .jk.ks em { background: #234b9a; }
-    .jk.sig i { border-color: var(--accent); box-shadow: 0 0 6px rgba(0, 255, 150, 0.7); }
-    .jk.used i { background: #2b2b2b; }
-    .jk:hover i { border-color: #fff; }
-    .jk.pend i { background: #fff; box-shadow: 0 0 10px #fff; }
-    .jk.drop i { background: var(--accent); transform: scale(1.3); }
-    .jk.insp em { outline: 1px solid var(--cold); }
-    .pblk.tie.xlr { border-color: #1e5b8a; } .pblk.tie.xlr h5 { color: #7cc4ff; }
-    .pblk.tie.trs { border-color: #3448b0; } .pblk.tie.trs h5 { color: #9aa8ff; }
-    .pblk.tie.pre { border-color: #4f7f2a; } .pblk.tie.pre h5 { color: #a6e07a; }
-    .pblk.tie.ob h5 { color: #e0c48a; }
-    .pblk.tie.ha { border-color: #1d8a8a; } .pblk.tie.ha h5 { color: #66f0f0; }
-    .pblk.tie.spare h5 { color: #777; }
-    svg.cables { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
+    .pbnav { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+    .pbnav .btn.sm { letter-spacing: 0; font-size: 10.5px; padding: 3px 7px; }
+    .pbview { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 6px; background: #0c0c0c; transition: height 0.35s ease; }
+    #pb { position: absolute; left: 0; top: 0; transform-origin: 0 0; transition: transform 0.35s ease; background: linear-gradient(#1b1b1b, #121212);
+      font-family: 'Roboto Condensed', 'Arial Narrow', Arial, sans-serif; color: #f2f2f2; user-select: none; }
+    #pb > div, #pb > span, #pb > svg { position: absolute; }
+    #pb .pill { background: #272727; border-radius: 12px; box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), inset 0 -2px 3px rgba(0, 0, 0, 0.7); }
+    #pb .wpanel { background: #e8e8e4; border-radius: 9px; }
+    #pb .jk { width: 18px; height: 18px; cursor: pointer; z-index: 2; touch-action: none; }
+    #pb .jk i { display: block; width: 18px; height: 18px; border-radius: 50%; background: radial-gradient(circle at 50% 58%, #000 0 42%, #161616 58%, #3d3d3d 100%); box-shadow: 0 0 0 1px #050505; }
+    #pb .jk:hover i { box-shadow: 0 0 0 2px #bdbdbd; }
+    #pb .jk.sig i { box-shadow: 0 0 0 2px var(--accent), 0 0 8px rgba(0, 255, 150, 0.7); }
+    #pb .jk.pend i { box-shadow: 0 0 0 3px #fff, 0 0 12px #fff; }
+    #pb .jk.drop i { box-shadow: 0 0 0 3px var(--accent), 0 0 12px var(--accent); }
+    #pb .jk.insp i { outline: 2px solid var(--cold); outline-offset: 2px; }
+    #pb .cap { font-size: 7.5px; line-height: 1.05; text-align: center; color: #f0f0f0; white-space: nowrap; }
+    #pb .arr { font-size: 8px; line-height: 1; text-align: center; color: #f0f0f0; }
+    #pb .inv { color: #111; }
+    #pb .ttl { font-size: 8.5px; font-weight: 700; color: #f2f2f2; white-space: nowrap; }
+    #pb .ttl.rule { border-bottom: 1px solid #dcdcdc; padding-bottom: 1px; }
+    #pb .ttl.ctr { text-align: center; }
+    #pb .cap.ttl0 { font-size: 8px; font-weight: 700; }
+    #pb .spkic { font-size: 9px; }
+    #pb .mtnum { font-size: 9px; font-weight: 700; text-align: center; line-height: 12px; }
+    #pb .mtnum.box { background: #f0f0f0; color: #111; border-radius: 2px; }
+    #pb .pnum { font-size: 9px; font-weight: 700; text-align: center; line-height: 13px; }
+    #pb .pnum.box { background: #111; color: #fff; border-radius: 2px; }
+    #pb .badge { font-size: 8px; font-weight: 700; text-align: center; line-height: 13px; border-radius: 2px; }
+    #pb .badge.inv { background: #f0f0f0; color: #111; }
+    #pb svg.hn { overflow: visible; }
+    #pb svg.hn path { stroke: #f0f0f0; stroke-width: 1; fill: none; }
+    #pb svg.hn.inv path { stroke: #111; }
+    #pb svg.hn rect { stroke: #f0f0f0; }
+    #pb .efxbox { font-size: 6.5px; text-align: center; border: 1px solid #111; color: #111; line-height: 8px; border-radius: 1px; }
+    #pb .parbr { border: 1px solid #f0f0f0; border-top: 0; border-radius: 0 0 3px 3px; }
+    #pb .lca { font-weight: 400; font-size: 9px; }
+    #pb .legend { font-size: 7.5px; font-weight: 700; line-height: 1.3; }
+    #pb .tbox { font-size: 8px; font-weight: 700; text-align: center; line-height: 11px; border: 1px solid #e6e6e6; border-radius: 2px; }
+    #pb .sband { font-size: 6.5px; font-weight: 700; text-align: center; line-height: 11px; color: #111; border-radius: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #pb .sband.xlr { background: #3aa0e8; }
+    #pb .sband.trs { background: #4a63ee; color: #fff; }
+    #pb .sband.pre { background: #7fd65a; }
+    #pb .sband.ob { background: #d4ae6a; }
+    #pb .sband.ha { background: #43e8e8; }
+    #pb .sband.spare { background: transparent; }
+    #pb.nostudio .sband { display: none; }
+    #pb .screw { border-radius: 50%; background: radial-gradient(circle at 40% 35%, #8a8a8a, #1e1e1e); }
+    #pb .zone { z-index: 6; border: 2px dashed transparent; border-radius: 8px; cursor: zoom-in; display: flex; align-items: center; justify-content: center; }
+    #pb .zone span { display: none; background: rgba(0, 0, 0, 0.8); color: var(--accent); font-family: var(--font); font-size: 22px; font-weight: bold; padding: 4px 14px; border-radius: 6px; border: 1px solid var(--accent); }
+    #pb .zone:hover { border-color: var(--accent); background: rgba(0, 255, 150, 0.07); }
+    #pb .zone:hover span { display: block; }
+    .pbview.zoomed #pb .zone { display: none; }
+    .pbview:not(.zoomed) #pb .jk { pointer-events: none; }
+    svg.cables { left: 0; top: 0; z-index: 4; pointer-events: none; overflow: visible; }
     svg.cables .hit { fill: none; stroke: transparent; stroke-width: 9; pointer-events: stroke; cursor: pointer; }
-    svg.cables .wire { fill: none; stroke-width: 3.5; opacity: 0.85; stroke-linecap: round; }
+    .pbview:not(.zoomed) svg.cables .hit { pointer-events: none; }
+    svg.cables .wire { fill: none; stroke-width: 4; opacity: 0.85; stroke-linecap: round; }
     svg.cables g.sel .wire { stroke-width: 6; opacity: 1; filter: drop-shadow(0 0 4px #fff); }
     svg.cables g circle { pointer-events: none; }
     svg.cables .drag { fill: none; stroke: #fff; stroke-width: 3; stroke-dasharray: 7 5; }
 
     /* rooms & rack */
-    .rooms { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 8px; margin-bottom: 14px; }
+    .rooms { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: 8px; margin-bottom: 14px; }
+    .room { min-width: 0; }
     .room, .unit { background: #0d1612; border: 1px solid var(--line); border-radius: 6px; padding: 8px; }
     .room h3, .unit h3, h3.sub { margin: 0 0 4px; font-size: 13px; color: var(--accent); letter-spacing: 1.5px; }
     .room h5 { margin: 6px 0 3px; font-size: 10.5px; color: var(--dim); font-weight: normal; letter-spacing: 0.5px; }
-    .pts { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 8px; }
-    .pt { display: flex; align-items: center; gap: 4px; font-size: 10.5px; }
-    .pt span { flex: 0 0 auto; min-width: 82px; color: #cfd8d3; }
-    .pt select { flex: 1; min-width: 0; padding: 1px 2px; font-size: 11px; }
-    .led { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%; background: #1d2a24; }
-    .led.on { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
-    .led.dead { background: var(--fault); }
+    .pts { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 3px 10px; }
+    .pts + .pts { border-top: 1px solid var(--line); padding-top: 6px; margin-top: 6px; }
+    .pt { display: flex; align-items: center; gap: 4px; font-size: 10.5px; min-width: 0; }
+    .pt span { flex: 0 0 44px; color: #cfd8d3; white-space: nowrap; }
+    .pt select { flex: 1; width: 100%; min-width: 0; padding: 1px 2px; font-size: 11px; }
     .rack { display: flex; flex-wrap: wrap; gap: 8px; }
     .uch { display: flex; gap: 6px; }
     .uc { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 52px; }
@@ -354,26 +373,26 @@
     html[lang="tr"] .lang-en, html[lang="en"] .lang-tr { display: none; }
     kbd { border: 1px solid var(--line2); border-radius: 3px; padding: 0 4px; font-family: inherit; }
 
-    /* work-in-progress lock */
-    .gate { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
-    .gate form { width: min(360px, 100%); text-align: center; }
-    .gate h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: 3px; text-shadow: 0 0 10px var(--accent); }
-    .gate input { width: 100%; margin: 10px 0; padding: 8px 10px; font-size: 18px; letter-spacing: 6px; text-align: center; background: #0b120f; color: var(--text); border: 1px solid var(--line2); border-radius: 4px; }
-    .gate .err { color: var(--fault); min-height: 1.5em; margin: 6px 0 0; font-size: 13px; }
-    .gate .row2 { display: flex; gap: 8px; justify-content: center; }
+    /* report / import dialogs */
+    dialog.dlg { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow: auto; background: #0e1813; color: var(--text);
+      border: 1px solid var(--accent); border-radius: 10px; padding: 18px 20px; box-shadow: 0 0 30px rgba(0, 255, 150, 0.25); font-family: var(--font); }
+    dialog.dlg::backdrop { background: rgba(0, 0, 0, 0.7); }
+    dialog.dlg h2 { margin: 0 0 6px; font-size: 16px; color: var(--accent); letter-spacing: 1px; }
+    dialog.dlg .lab2 { display: block; font-size: 12px; color: var(--dim); margin: 10px 0 4px; }
+    dialog.dlg input[type=text], dialog.dlg textarea { width: 100%; background: #0b120f; color: var(--text); border: 1px solid var(--line2); border-radius: 4px; padding: 6px 8px; font-family: inherit; font-size: 13px; }
+    dialog.dlg textarea { resize: vertical; }
+    dialog.dlg .kinds { display: flex; flex-wrap: wrap; gap: 6px; }
+    dialog.dlg .kinds label { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--line2); border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 12.5px; }
+    dialog.dlg .kinds label:has(input:checked) { border-color: var(--accent); color: var(--accent); }
+    dialog.dlg .kinds input, dialog.dlg .chk input { accent-color: var(--accent); }
+    dialog.dlg .chk { display: flex; align-items: flex-start; gap: 6px; margin: 10px 0; font-size: 12.5px; cursor: pointer; }
+    dialog.dlg .qbtns .sp { flex: 1; }
+    dialog.dlg #repTo { color: var(--text); user-select: all; }
+    dialog.dlg #repNote, dialog.dlg #impNote { color: var(--warn); min-height: 1em; }
   </style>
 </head>
 <body>
-<div class="gate" id="gate" hidden>
-  <form class="panel" id="gateForm" onsubmit="return false">
-    <h1>ASP8024</h1>
-    <p class="muted small" id="gateMsg"></p>
-    <input id="gatePin" type="password" inputmode="numeric" autocomplete="off" aria-label="PIN">
-    <div class="row2"><a class="btn" href="../SADB2.html">↵</a><button class="btn primary" type="submit">OK</button></div>
-    <p class="err" id="gateErr"></p>
-  </form>
-</div>
-<div class="wrap" id="app" hidden>
+<div class="wrap">
   <header class="top">
     <a class="back" href="../SADB2.html" id="backLink">↵</a>
     <div>
@@ -393,6 +412,7 @@
     </div>
     <select id="exSel" hidden aria-label="Exercise"></select>
     <span class="sp"></span>
+    <button class="btn" id="reportBtn" data-t="btn.report"></button>
     <button class="btn" id="exportBtn" data-t="btn.export"></button>
     <button class="btn" id="importBtn" data-t="btn.import"></button>
     <input type="file" id="importFile" accept="application/json,.json" hidden>
@@ -419,8 +439,9 @@
         <div id="center" class="center"></div>
       </section>
       <section class="view panel" id="v-patch" hidden>
-        <div class="pbbar"><span id="pbMsg"></span><span class="sp"></span><span id="pbCount"></span><button id="clearCablesBtn" class="btn sm danger" data-t="btn.clearCables"></button></div>
-        <div class="pbscroll"><div id="pb"></div></div>
+        <div class="pbnav" id="pbNav"></div>
+        <div class="pbbar"><span id="pbMsg"></span><span class="sp"></span><label><input type="checkbox" id="pbStudio" checked> <span data-t="pb.studio"></span></label><span id="pbCount"></span><button id="clearCablesBtn" class="btn sm danger" data-t="btn.clearCables"></button></div>
+        <div class="pbview" id="pbView"><div id="pb"></div></div>
       </section>
       <section class="view panel" id="v-rooms" hidden>
         <p class="muted small" data-t="rooms.hint"></p>
@@ -497,47 +518,52 @@
     </div>
   </details>
 </div>
+<dialog class="dlg" id="repDlg">
+  <form id="repForm" onsubmit="return false">
+    <h2 data-t="rep.title"></h2>
+    <p class="muted small" data-t="rep.intro"></p>
+    <div class="lab2" data-t="rep.kind"></div>
+    <div class="kinds">
+      <label><input type="radio" name="repKind" value="bug" checked> <span data-t="rep.kind.bug"></span></label>
+      <label><input type="radio" name="repKind" value="setup"> <span data-t="rep.kind.setup"></span></label>
+      <label><input type="radio" name="repKind" value="idea"> <span data-t="rep.kind.idea"></span></label>
+    </div>
+    <label class="lab2" for="repName" data-t="rep.name"></label>
+    <input type="text" id="repName" maxlength="60" autocomplete="name">
+    <label class="lab2" for="repText" data-t="rep.text"></label>
+    <textarea id="repText" rows="6"></textarea>
+    <label class="chk"><input type="checkbox" id="repSetup" checked> <span data-t="rep.setup"></span></label>
+    <div class="qbtns">
+      <button class="btn primary" type="button" id="repSend" data-t="rep.send"></button>
+      <button class="btn" type="button" id="repCopy" data-t="rep.copy"></button>
+      <span class="sp"></span>
+      <button class="btn" type="button" data-close data-t="rep.cancel"></button>
+    </div>
+    <p class="small muted"><span data-t="rep.fallback"></span> <b id="repTo"></b></p>
+    <p class="small" id="repNote"></p>
+  </form>
+</dialog>
+<dialog class="dlg" id="impDlg">
+  <h2 data-t="imp.title"></h2>
+  <p class="muted small" data-t="imp.hint"></p>
+  <textarea id="impCode" rows="4" spellcheck="false" aria-label="Setup code"></textarea>
+  <div class="qbtns">
+    <button class="btn primary" type="button" id="impLoad" data-t="imp.load"></button>
+    <button class="btn" type="button" id="impFileBtn" data-t="imp.file"></button>
+    <span class="sp"></span>
+    <button class="btn" type="button" data-close data-t="rep.cancel"></button>
+  </div>
+  <p class="small" id="impNote"></p>
+</dialog>
 <script src="asp-i18n.js"></script>
 <script src="asp-model.js"></script>
+<script src="asp-patchbay.js"></script>
 <script src="asp-ui.js"></script>
 <script src="asp-ex.js"></script>
+<script src="asp-share.js"></script>
 <script>
-  // Work-in-progress lock. This is a static site, so it only keeps casual visitors out:
-  // the PIN is stored as a salted SHA-256 hash, and an unlocked browser stays unlocked.
-  (function () {
-    const KEY = 'asp8024.unlocked';
-    const HASH = '7ae5aad303662acf460cafea28219d97683b24bc05ebf24cc7408b9b75f33a26';
-    const en = (function () { try { return localStorage.getItem('asp8024.lang') === 'en'; } catch (e) { return false; } })();
-    const $ = id => document.getElementById(id);
-    async function hash(pin) {
-      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('asp8024:' + pin));
-      return Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, '0')).join('');
-    }
-    function start() {
-      $('gate').hidden = true;
-      $('app').hidden = false;
-      if (/SADB1|SinyalAkisi1/.test(document.referrer)) $('backLink').href = '../../SinyalAkisi1/SADB1.html';
-      ASP.init();
-    }
-    let unlocked = false;
-    try { unlocked = localStorage.getItem(KEY) === HASH; } catch (e) { /* storage unavailable */ }
-    if (unlocked) { start(); return; }
-    $('gateMsg').textContent = en ? 'This page is a work in progress. Enter the access code.' : 'Bu sayfa hazırlık aşamasında. Erişim kodunu gir.';
-    $('gate').hidden = false;
-    $('gatePin').focus();
-    $('gateForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      let h = '';
-      try { h = await hash($('gatePin').value.trim()); } catch (err) { /* crypto.subtle needs https or localhost */ }
-      if (h !== HASH) {
-        $('gateErr').textContent = en ? 'Wrong code.' : 'Kod hatalı.';
-        $('gatePin').select();
-        return;
-      }
-      try { localStorage.setItem(KEY, HASH); } catch (err) { /* stays unlocked for this visit only */ }
-      start();
-    });
-  })();
+  if (/SADB1|SinyalAkisi1/.test(document.referrer)) document.getElementById('backLink').href = '../../SinyalAkisi1/SADB1.html';
+  ASP.init();
 </script>
 </body>
 </html>
