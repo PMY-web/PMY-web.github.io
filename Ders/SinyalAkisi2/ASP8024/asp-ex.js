@@ -22,7 +22,30 @@
   function mic(S, pt, type) { const id = 'd' + S.nextDev++; S.plug[pt] = { type: type || 'cond', id }; return id; }
   function take(S, n, k) { S.daw[n - 1].content = [A.C('take:' + k, A.TAKES[k].lvl)]; }
   const powered = (R, id) => R.powered.has(id);
-  const micItem = (R, id) => item(powered(R, id), 'Kondenser mikrofon phantom power (+48V) alıyor.', 'The condenser mic gets phantom power (+48V).');
+  function micItem(R, id) {
+    const p = A.srcPlug(R.S, id);
+    const ok = !!p && (A.DEVICES[p.type].phantom !== 'need' || powered(R, id));
+    return item(ok, 'Mikrofon takılı ve çalışıyor (kondenser ise phantom power (+48V) alıyor).', 'The mic is plugged in and working (a condenser gets phantom power, +48V).');
+  }
+  // Students may unplug the preset mic and plug in their own, which gets a new id, so a check runs
+  // once per mic in the setup (or in a recording) and the best result counts.
+  function micsOf(S) {
+    const ids = new Set();
+    for (const p of Object.values(S.plug)) if (A.DEVICES[p.type].mic) ids.add(p.id);
+    for (const d of S.daw) for (const c of d.content || []) if (/^d\d+$/.test(c.src)) ids.add(c.src);
+    return ids.size ? [...ids] : [''];
+  }
+  function runChecks(e, R, S, ctx) {
+    let best = null;
+    for (const mic of micsOf(S)) {
+      let r = e.check(R, S, Object.assign({ mic }, ctx));
+      if (Array.isArray(r)) r = { items: r };
+      r.score = r.items.filter(i => i.ok).length;
+      if (!best || r.score > best.score) best = r;
+    }
+    return best;
+  }
+  A.runExerciseChecks = runChecks;
 
   // ---------------------------------------------------------------- exercise list
   const EX = [
@@ -34,10 +57,10 @@
         en: 'A condenser mic is plugged into MIC 1 in KS03. Get it to <b>DAW In 1</b> at a healthy level (-24…+12 dBu).'
       },
       preset(S) { mic(S, 'mb:KS03:1'); },
-      check(R) {
-        const cs = R.jackIn('daw1.in').filter(c => c.src === 'd1');
+      check(R, S, ctx) {
+        const cs = R.jackIn('daw1.in').filter(c => c.src === ctx.mic);
         const l = A.lvlOf(cs);
-        return [micItem(R, 'd1'),
+        return [micItem(R, ctx.mic),
           item(cs.length, 'Mikrofon DAW In 1\'e ulaşıyor.', 'The mic reaches DAW In 1.'),
           item(cs.length && l >= -24 && l <= 12, 'Seviye -24…+12 dBu arasında (şu an ' + A.dbStr(l) + ').', 'Level is within -24…+12 dBu (now ' + A.dbStr(l) + ').')];
       }
@@ -65,10 +88,10 @@
         en: 'A vocal mic is on KS03 MIC 1 and a bass take is on DAW track 3. The artist on <b>HA8000 A</b> (Foldback 1) should hear both through <b>Cue A</b>, in both ears (mono).'
       },
       preset(S) { mic(S, 'mb:KS03:1'); take(S, 3, 'bass'); },
-      check(R) {
+      check(R, S, ctx) {
         const ok = (side, src) => R.jackIn('ha8.a' + side).some(c => c.src === src && c.chain.includes('cue:A'));
-        return [micItem(R, 'd1'),
-          item(ok('L', 'd1') && ok('R', 'd1'), 'Vokal Cue A üzerinden HA8000 A L ve R\'de.', 'Vocal is on HA8000 A L and R via Cue A.'),
+        return [micItem(R, ctx.mic),
+          item(ok('L', ctx.mic) && ok('R', ctx.mic), 'Vokal Cue A üzerinden HA8000 A L ve R\'de.', 'Vocal is on HA8000 A L and R via Cue A.'),
           item(ok('L', 'take:bass') && ok('R', 'take:bass'), 'Bas kaydı Cue A üzerinden HA8000 A L ve R\'de.', 'Bass take is on HA8000 A L and R via Cue A.')];
       }
     },
@@ -80,12 +103,12 @@
         en: 'A mic in the live room is being recorded; EQ and compression are done with outboard gear.<br>Split the signal of one mic: run one copy through the <b>console preamp</b> and the other through an <b>outboard preamp</b>, and get them to two different DAW inputs.<br><span class="muted">You can move the mic to any point in the "Rooms & Outboard" tab.</span>'
       },
       preset(S) { mic(S, 'mb:KS03:1'); },
-      check(R) {
+      check(R, S, ctx) {
         const ins = dawIns(R);
-        const a = ins.filter(x => x.cs.some(c => c.src === 'd1' && hasTag(c, CON_PRE) && !hasTag(c, OUT_PRE)));
-        const b = ins.filter(x => x.cs.some(c => c.src === 'd1' && hasTag(c, OUT_PRE) && !hasTag(c, CON_PRE)));
+        const a = ins.filter(x => x.cs.some(c => c.src === ctx.mic && hasTag(c, CON_PRE) && !hasTag(c, OUT_PRE)));
+        const b = ins.filter(x => x.cs.some(c => c.src === ctx.mic && hasTag(c, OUT_PRE) && !hasTag(c, CON_PRE)));
         const two = a.some(x => b.some(y => y.n !== x.n));
-        return [micItem(R, 'd1'),
+        return [micItem(R, ctx.mic),
           item(a.length, 'Bir DAW girişinde mikrofon yalnızca konsol preamp\'inden geçmiş olarak var.', 'One DAW input has the mic through the console preamp only.'),
           item(b.length, 'Bir DAW girişinde mikrofon yalnızca outboard preamp\'ten (HV-3D / 1073) geçmiş olarak var.', 'One DAW input has the mic through an outboard preamp only (HV-3D / 1073).'),
           item(two, 'İki kopya iki farklı DAW girişinde.', 'The two copies are on two different DAW inputs.')];
@@ -99,15 +122,15 @@
         en: 'Send the signal of one mic to two DAW inputs: one <b>through EQ</b> (outboard Massive Passive), one <b>without EQ</b>. Do it <b>two different ways</b>.'
       },
       preset(S) { mic(S, 'mb:KS03:1'); },
-      check(R) {
+      check(R, S, ctx) {
         const ins = dawIns(R);
         let pair = null;
         for (const x of ins) for (const c of x.cs) {
-          if (c.src !== 'd1' || !hasTag(c, OB_EQ)) continue;
-          for (const y of ins) if (y.n !== x.n) for (const d of y.cs) if (d.src === 'd1' && !hasTag(d, ANY_EQ)) pair = pair || [c, d];
+          if (c.src !== ctx.mic || !hasTag(c, OB_EQ)) continue;
+          for (const y of ins) if (y.n !== x.n) for (const d of y.cs) if (d.src === ctx.mic && !hasTag(d, ANY_EQ)) pair = pair || [c, d];
         }
-        const items = [micItem(R, 'd1'),
-          item(ins.some(x => x.cs.some(c => c.src === 'd1' && hasTag(c, OB_EQ))), 'Bir DAW girişinde mikrofon Massive Passive\'dan geçmiş.', 'One DAW input has the mic through the Massive Passive.'),
+        const items = [micItem(R, ctx.mic),
+          item(ins.some(x => x.cs.some(c => c.src === ctx.mic && hasTag(c, OB_EQ))), 'Bir DAW girişinde mikrofon Massive Passive\'dan geçmiş.', 'One DAW input has the mic through the Massive Passive.'),
           item(pair, 'Başka bir DAW girişinde aynı mikrofon EQ\'suz.', 'Another DAW input has the same mic without any EQ.')];
         return { items, sig: pair ? sigOf(pair) : null };
       }
@@ -120,12 +143,12 @@
         en: 'Run a mic through EQ and record it; then run that recorded, EQ\'d signal through a compressor and record the result. Use <b>only one mixer channel</b> for all of it.<br><span class="muted">Record with the ● REC buttons in the "DAW / Interface" tab.</span>'
       },
       preset(S) { mic(S, 'mb:KS03:1'); },
-      check(R, S) {
+      check(R, S, ctx) {
         const recs = S.daw.map((d, i) => ({ n: i + 1, cs: d.content || [] }));
-        const first = recs.filter(r => r.cs.some(c => c.src === 'd1' && hasTag(c, OB_EQ) && !hasTag(c, OB_CMP)));
+        const first = recs.filter(r => r.cs.some(c => c.src === ctx.mic && hasTag(c, OB_EQ) && !hasTag(c, OB_CMP)));
         let second = null;
         for (const r of recs) for (const c of r.cs) {
-          if (c.src !== 'd1') continue;
+          if (c.src !== ctx.mic) continue;
           const p = idxOf(c, /^play:\d+$/);
           if (p < 0 || idxOf(c, OB_EQ) < 0 || idxOf(c, OB_EQ) > p || idxOf(c, OB_CMP, p) < 0) continue;
           second = second || c;
@@ -226,15 +249,15 @@
         en: 'A mic in the live room (KS03 MIC 1) is being recorded while a guitar take (DAW track 2) plays back through the desk. Run <b>all of it through the same compressor channel</b>; the mic must not have gone through the DAW yet; use <b>at most 2 patch cables</b>.'
       },
       preset(S) { mic(S, 'mb:KS03:1'); take(S, 2, 'gtr'); },
-      check(R, S) {
+      check(R, S, ctx) {
         let both = false;
         for (const dev of ['vm', 'tlc']) for (const i of range(1, 4)) {
           const o = R.outboard(dev, i);
-          const m = o.some(c => c.src === 'd1' && !hasTag(c, /^(play|rec):/));
+          const m = o.some(c => c.src === ctx.mic && !hasTag(c, /^(play|rec):/));
           const g = o.some(c => c.src === 'take:gtr');
           if (m && g) both = true;
         }
-        return [micItem(R, 'd1'),
+        return [micItem(R, ctx.mic),
           item(both, 'Aynı kompresör kanalında hem canlı mikrofon hem gitar kaydı var.', 'One compressor channel carries both the live mic and the guitar take.'),
           item(S.cables.length <= 2, 'En fazla 2 kablo kullanıldı (' + S.cables.length + ').', 'At most 2 cables used (' + S.cables.length + ').')];
       }
@@ -247,11 +270,11 @@
         en: 'Take the mic (KS03 MIC 1) to the <b>artist foldback</b> (HA8000) without going through the DAW. The signal must not pass through the <b>Artist Foldback section of the patchbay</b>, nor through <b>Cue A or Cue B</b>. Do it <b>two different ways</b>.'
       },
       preset(S) { mic(S, 'mb:KS03:1'); },
-      check(R, S) {
-        const ok = c => c.src === 'd1' && !hasTag(c, /^(play|rec|cue):/);
+      check(R, S, ctx) {
+        const ok = c => c.src === ctx.mic && !hasTag(c, /^(play|rec|cue):/);
         const hits = ['ha8.aL', 'ha8.aR', 'ha8.bL', 'ha8.bR'].map(j => R.jackIn(j).filter(ok)).reduce((a, b) => a.concat(b), []);
         const fbPatched = S.cables.some(c => A.FB_SECTION.includes(c.a) || A.FB_SECTION.includes(c.b));
-        const items = [micItem(R, 'd1'),
+        const items = [micItem(R, ctx.mic),
           item(hits.length, 'Mikrofon, DAW ve Cue A/B\'ye uğramadan bir artist kulaklık amfisine ulaşıyor.', 'The mic reaches an artist headamp without the DAW or Cue A/B.'),
           item(!fbPatched, 'Patchbay\'in Artist Foldback bölümüne kablo takılmadı.', 'No cable in the Artist Foldback section of the patchbay.')];
         return { items, sig: hits.length ? sigOf(hits.slice(0, 1)) : null };
@@ -281,8 +304,7 @@
   function runCheck() {
     const e = def(), p = prog(e.id), S = U().S, R = A.evaluate(S);
     const part = e.hidden && p.part1 && p.decoded ? 2 : 1;
-    let res = e.check(R, S, { base: presetState(e), part });
-    if (Array.isArray(res)) res = { items: res };
+    const res = runChecks(e, R, S, { base: presetState(e), part });
     const ok = res.items.every(i => i.ok);
     let note = null;
     if (ok) {
